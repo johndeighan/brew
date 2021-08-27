@@ -28,4 +28,4 @@ content = slurp(filepath)
 debug content, "CONTENT:"
 
 result = starbucks({content, filename: filepath})
-say untabify(result.code)
+say result.code     # untabify(result.code) fails!
