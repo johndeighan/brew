@@ -3,6 +3,7 @@
 # brew.coffee
 
 import {existsSync} from 'fs'
+import {parse} from 'path'
 import {strict as assert} from 'assert'
 
 import {say, undef} from '@jdeighan/coffee-utils'
@@ -19,7 +20,8 @@ assert existsSync(filepath),
 	"File '#{filepath}' (org='#{orgPath}') does not exist"
 debug "filepath = '#{filepath}'"
 
-dir = mydir(`import.meta.url`)
+# --- Load environment from directory containing source file
+{dir} = parse(filepath)
 assert existsSync(dir)
 loadEnvFrom(dir, {rootName: 'dir_root'})
 debug "dump dir is '#{process.env.dir_dump}'"
