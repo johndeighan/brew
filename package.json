@@ -1,0 +1,28 @@
+{
+	"name": "@jdeighan/brew",
+	"version": "1.0.1",
+	"type": "module",
+	"preferGlobal": true,
+	"bin": {
+		"greetStarbucks": "./bin/greet.js",
+		"brewStarbucks": "./bin/brew.js"
+	},
+	"description": "command to process Starbucks files",
+	"main": "index.js",
+	"scripts": {
+		"prepublish": "coffee -c .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"svelte",
+		"sveltekit",
+		"coffeescript"
+	],
+	"author": "John Deighan",
+	"license": "MIT",
+	"dependencies": {
+		"@jdeighan/coffee-utils": "^1.1.29",
+		"@jdeighan/env": "^1.0.29",
+		"@jdeighan/starbucks": "^1.1.26"
+	}
+}
