@@ -10,7 +10,7 @@
 	"description": "command to process Starbucks files",
 	"main": "index.js",
 	"scripts": {
-		"prepublish": "coffee -c .",
+		"prepublish": "coffee --bare --no-header -c .",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [

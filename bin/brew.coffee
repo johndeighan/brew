@@ -1,3 +1,5 @@
+`#!/usr/bin/env node
+`
 # brew.coffee
 
 import {existsSync} from 'fs'
