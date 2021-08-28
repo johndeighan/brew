@@ -23,6 +23,6 @@
 	"dependencies": {
 		"@jdeighan/coffee-utils": "^1.1.33",
 		"@jdeighan/env": "^1.0.30",
-		"@jdeighan/starbucks": "^1.1.30"
+		"@jdeighan/starbucks": "^1.1.31"
 	}
 }
