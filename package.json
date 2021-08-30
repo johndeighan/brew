@@ -1,6 +1,6 @@
 {
 	"name": "@jdeighan/brew",
-	"version": "1.0.13",
+	"version": "1.0.14",
 	"type": "module",
 	"preferGlobal": true,
 	"bin": {
