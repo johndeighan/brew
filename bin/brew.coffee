@@ -7,11 +7,15 @@ import {parse} from 'path'
 import {strict as assert} from 'assert'
 
 import {say, undef} from '@jdeighan/coffee-utils'
-import {slurp, mydir, getFullPath} from '@jdeighan/coffee-utils/fs'
+import {
+	slurp, mydir, getFullPath, isMultiFile, multipleFiles,
+	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {untabify} from '@jdeighan/coffee-utils/indent'
 import {loadEnvFrom} from '@jdeighan/env'
 import {starbucks} from '@jdeighan/starbucks'
+
+# ---------------------------------------------------------------------------
 
 orgPath = process.argv[2]
 debug "brew(): orgPath = '#{orgPath}'"
