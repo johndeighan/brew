@@ -23,7 +23,9 @@ import {
 import {
   slurp,
   mydir,
-  getFullPath
+  getFullPath,
+  isMultiFile,
+  multipleFiles
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -43,6 +45,7 @@ import {
   starbucks
 } from '@jdeighan/starbucks';
 
+// ---------------------------------------------------------------------------
 orgPath = process.argv[2];
 
 debug(`brew(): orgPath = '${orgPath}'`);
