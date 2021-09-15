@@ -21,8 +21,8 @@
 	"author": "John Deighan",
 	"license": "MIT",
 	"dependencies": {
-		"@jdeighan/coffee-utils": "^1.2.23",
-		"@jdeighan/env": "^1.1.7",
-		"@jdeighan/starbucks": "^1.2.2"
+		"@jdeighan/coffee-utils": "^2.1.4",
+		"@jdeighan/env": "^2.0.0",
+		"@jdeighan/starbucks": "^2.0.0"
 	}
 }
