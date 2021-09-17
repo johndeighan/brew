@@ -2,37 +2,81 @@
 `
 # brew.coffee
 
-import {existsSync} from 'fs'
-import {parse} from 'path'
 import {strict as assert} from 'assert'
+import {existsSync, lstatSync} from 'fs'
+import {parse} from 'path'
 
-import {say, undef} from '@jdeighan/coffee-utils'
+import {undef, pass} from '@jdeighan/coffee-utils'
+import {log} from '@jdeighan/coffee-utils/log'
 import {
-	slurp, mydir, getFullPath, isMultiFile, multipleFiles,
+	slurp, barf, getFullPath, forEachFile, withExt, mkpath,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {untabify} from '@jdeighan/coffee-utils/indent'
 import {loadEnvFrom} from '@jdeighan/env'
 import {starbucks} from '@jdeighan/starbucks'
 
+###
+	brew <dir>    -- brew all files in directory tree
+###
+
 # ---------------------------------------------------------------------------
 
-orgPath = process.argv[2]
-debug "brew(): orgPath = '#{orgPath}'"
-filepath = getFullPath(orgPath)
-assert existsSync(filepath),
-	"File '#{filepath}' (org='#{orgPath}') does not exist"
-debug "filepath = '#{filepath}'"
+main = () ->
+	orgPath = process.argv[2]
+	debug "brew(): orgPath = '#{orgPath}'"
+	assert orgPath, "Missing file/directory name on command line"
+	path = getFullPath(orgPath)
 
-# --- Load environment from directory containing source file
-{dir} = parse(filepath)
-assert existsSync(dir)
-loadEnvFrom(dir, {rootName: 'dir_root'})
-debug "dump dir is '#{process.env.dir_dump}'"
+	# --- may be a file or a directory
+	assert existsSync(path),
+		"'#{path}' does not exist"
 
-content = slurp(filepath)
-debug content, "CONTENT:"
+	ent = lstatSync(path)
+	if ent.isFile()
+		log "brew file '#{path}'"
 
-result = starbucks({content, filename: filepath})
-say result.code     # untabify(result.code) fails!
-# a final comment
+		# --- Load environment from directory containing source file
+		{dir} = parse(path)
+		debug "file is in directory '#{dir}'"
+		loadEnvFrom(dir)
+		dumpDirs()
+		brewFile(path)
+	else if ent.isDirectory()
+		log "brew files in dir '#{path}'"
+
+		# --- Load environment from given directory
+		loadEnvFrom(path)
+		dumpDirs()
+
+		callback = (filename, dir, level) ->
+			brewFile(mkpath(dir, filename))
+			return
+
+		forEachFile(path, callback, /\.starbucks$/)
+
+# ---------------------------------------------------------------------------
+
+brewFile = (filepath) ->
+
+	debug "filepath = '#{filepath}'"
+
+	content = slurp(filepath)
+	debug "CONTENT:", content
+
+	result = starbucks({content, filename: filepath})
+	barf withExt(filepath, '.svelte'), untabify(result.code)
+
+# ---------------------------------------------------------------------------
+
+dumpDirs = () ->
+
+	# --- Print out names of defined directories
+	for key,value of process.env
+		if (key.indexOf('DIR_') == 0) || (key.indexOf('dir_') == 0)
+			log "#{key} = #{value}"
+	return
+
+# ---------------------------------------------------------------------------
+
+main()

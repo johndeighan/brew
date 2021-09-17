@@ -8,10 +8,13 @@
 		"brewStarbucks": "./bin/brew.js"
 	},
 	"description": "command to process Starbucks files",
-	"main": "index.js",
+	"main": "./bin/brew.js",
 	"scripts": {
-		"prepare": "coffee --bare --no-header -c .",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"build": "coffee --bare --no-header -c .",
+		"pretest": "coffee --bare --no-header -c . && node ./bin/brew.js ./test",
+		"test": "ava ./test/*.test.js",
+		"prefinaltest": "cls && coffee --bare --no-header -c .",
+		"finaltest": "cross-env FINALTEST=yes ava ./test/*.test.js"
 	},
 	"keywords": [
 		"svelte",
@@ -21,8 +24,10 @@
 	"author": "John Deighan",
 	"license": "MIT",
 	"dependencies": {
-		"@jdeighan/coffee-utils": "^2.1.4",
-		"@jdeighan/env": "^2.0.0",
-		"@jdeighan/starbucks": "^2.0.0"
+		"@jdeighan/coffee-utils": "^2.1.6",
+		"@jdeighan/env": "^2.0.3",
+		"@jdeighan/starbucks": "^2.0.2",
+		"cross-env": "^7.0.3",
+		"yargs": "^17.1.1"
 	}
 }

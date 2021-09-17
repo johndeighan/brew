@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 ;
-var content, dir, filepath, orgPath, result;
+var brewFile, dumpDirs, main;
 
 import {
   // brew.coffee
-  existsSync
+  strict as assert
+} from 'assert';
+
+import {
+  existsSync,
+  lstatSync
 } from 'fs';
 
 import {
@@ -12,20 +17,21 @@ import {
 } from 'path';
 
 import {
-  strict as assert
-} from 'assert';
-
-import {
-  say,
-  undef
+  undef,
+  pass
 } from '@jdeighan/coffee-utils';
 
 import {
+  log
+} from '@jdeighan/coffee-utils/log';
+
+import {
   slurp,
-  mydir,
+  barf,
   getFullPath,
-  isMultiFile,
-  multipleFiles
+  forEachFile,
+  withExt,
+  mkpath
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -45,37 +51,64 @@ import {
   starbucks
 } from '@jdeighan/starbucks';
 
+/*
+	brew <dir>    -- brew all files in directory tree
+*/
 // ---------------------------------------------------------------------------
-orgPath = process.argv[2];
+main = function() {
+  var callback, dir, ent, orgPath, path;
+  orgPath = process.argv[2];
+  debug(`brew(): orgPath = '${orgPath}'`);
+  assert(orgPath, "Missing file/directory name on command line");
+  path = getFullPath(orgPath);
+  // --- may be a file or a directory
+  assert(existsSync(path), `'${path}' does not exist`);
+  ent = lstatSync(path);
+  if (ent.isFile()) {
+    log(`brew file '${path}'`);
+    // --- Load environment from directory containing source file
+    ({dir} = parse(path));
+    debug(`file is in directory '${dir}'`);
+    loadEnvFrom(dir);
+    dumpDirs();
+    return brewFile(path);
+  } else if (ent.isDirectory()) {
+    log(`brew files in dir '${path}'`);
+    // --- Load environment from given directory
+    loadEnvFrom(path);
+    dumpDirs();
+    callback = function(filename, dir, level) {
+      brewFile(mkpath(dir, filename));
+    };
+    return forEachFile(path, callback, /\.starbucks$/);
+  }
+};
 
-debug(`brew(): orgPath = '${orgPath}'`);
+// ---------------------------------------------------------------------------
+brewFile = function(filepath) {
+  var content, result;
+  debug(`filepath = '${filepath}'`);
+  content = slurp(filepath);
+  debug("CONTENT:", content);
+  result = starbucks({
+    content,
+    filename: filepath
+  });
+  return barf(withExt(filepath, '.svelte'), untabify(result.code));
+};
 
-filepath = getFullPath(orgPath);
+// ---------------------------------------------------------------------------
+dumpDirs = function() {
+  var key, ref, value;
+  ref = process.env;
+  // --- Print out names of defined directories
+  for (key in ref) {
+    value = ref[key];
+    if ((key.indexOf('DIR_') === 0) || (key.indexOf('dir_') === 0)) {
+      log(`${key} = ${value}`);
+    }
+  }
+};
 
-assert(existsSync(filepath), `File '${filepath}' (org='${orgPath}') does not exist`);
-
-debug(`filepath = '${filepath}'`);
-
-// --- Load environment from directory containing source file
-({dir} = parse(filepath));
-
-assert(existsSync(dir));
-
-loadEnvFrom(dir, {
-  rootName: 'dir_root'
-});
-
-debug(`dump dir is '${process.env.dir_dump}'`);
-
-content = slurp(filepath);
-
-debug(content, "CONTENT:");
-
-result = starbucks({
-  content,
-  filename: filepath
-});
-
-say(result.code); // untabify(result.code) fails!
-
-// a final comment
+// ---------------------------------------------------------------------------
+main();
