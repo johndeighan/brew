@@ -1,9 +1,7 @@
-#!/usr/bin/env node
-;
+// brew.coffee
 var brewFile, dumpDirs, main;
 
 import {
-  // brew.coffee
   strict as assert
 } from 'assert';
 
@@ -94,7 +92,8 @@ brewFile = function(filepath) {
     content,
     filename: filepath
   });
-  return barf(withExt(filepath, '.svelte'), untabify(result.code));
+  barf(withExt(filepath, '.svelte'), untabify(result.code));
+  log(`BREW: ${filepath} -> *.svelte`);
 };
 
 // ---------------------------------------------------------------------------

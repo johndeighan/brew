@@ -1,5 +1,3 @@
-`#!/usr/bin/env node
-`
 # brew.coffee
 
 import {strict as assert} from 'assert'
@@ -66,6 +64,8 @@ brewFile = (filepath) ->
 
 	result = starbucks({content, filename: filepath})
 	barf withExt(filepath, '.svelte'), untabify(result.code)
+	log "BREW: #{filepath} -> *.svelte"
+	return
 
 # ---------------------------------------------------------------------------
 
