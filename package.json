@@ -4,8 +4,7 @@
 	"type": "module",
 	"preferGlobal": true,
 	"bin": {
-		"greetStarbucks": "./bin/greet.js",
-		"brewStarbucks": "./bin/brew.js"
+		"cielo": "./bin/brew.js"
 	},
 	"description": "command to process Starbucks files",
 	"main": "./bin/brew.js",
