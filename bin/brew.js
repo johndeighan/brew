@@ -1,5 +1,5 @@
 // brew.coffee
-var brewFile, dumpDirs, main;
+var brewCieloFile, brewDirectory, brewStarbucksFile, dumpDirs, main;
 
 import {
   strict as assert
@@ -34,6 +34,7 @@ import {
 
 import {
   setDebugging,
+  debugging,
   debug
 } from '@jdeighan/coffee-utils/debug';
 
@@ -50,50 +51,83 @@ import {
 } from '@jdeighan/starbucks';
 
 /*
+	brew <file>   -- brew one file (*.starbucks or *.cielo)
 	brew <dir>    -- brew all files in directory tree
 */
 // ---------------------------------------------------------------------------
 main = function() {
-  var callback, dir, ent, orgPath, path;
+  var base, dir, ent, ext, orgPath, path;
   orgPath = process.argv[2];
   debug(`brew(): orgPath = '${orgPath}'`);
   assert(orgPath, "Missing file/directory name on command line");
-  path = getFullPath(orgPath);
+  path = getFullPath(orgPath); // resolve relative paths
+  
   // --- may be a file or a directory
   assert(existsSync(path), `'${path}' does not exist`);
   ent = lstatSync(path);
   if (ent.isFile()) {
-    log(`brew file '${path}'`);
+    ({dir, ext, base} = parse(path));
     // --- Load environment from directory containing source file
-    ({dir} = parse(path));
-    debug(`file is in directory '${dir}'`);
     loadEnvFrom(dir);
-    dumpDirs();
-    return brewFile(path);
+    if (debugging) {
+      dumpDirs();
+    }
+    if (ext === '.starbucks') {
+      brewStarbucksFile(dir, base);
+    } else if (ext === '.cielo') {
+      brewCieloFile(dir, base);
+    } else {
+      croak(`Can't brew ${base}`);
+    }
   } else if (ent.isDirectory()) {
-    log(`brew files in dir '${path}'`);
     // --- Load environment from given directory
     loadEnvFrom(path);
-    dumpDirs();
-    callback = function(filename, dir, level) {
-      brewFile(mkpath(dir, filename));
-    };
-    return forEachFile(path, callback, /\.starbucks$/);
+    if (debugging) {
+      dumpDirs();
+    }
+    brewDirectory(path);
   }
 };
 
 // ---------------------------------------------------------------------------
-brewFile = function(filepath) {
-  var content, result;
-  debug(`filepath = '${filepath}'`);
-  content = slurp(filepath);
+brewDirectory = function(dir) {
+  var cbCielo, cbStarbucks;
+  debug(`brew files in dir '${dir}'`);
+  cbStarbucks = function(base, dir, level) {
+    brewStarbucksFile(dir, base);
+  };
+  cbCielo = function(base, dir, level) {
+    brewCieloFile(dir, base);
+  };
+  forEachFile(dir, cbStarbucks, /\.starbucks$/);
+  forEachFile(dir, cbCielo, /\.cielo$/);
+};
+
+// ---------------------------------------------------------------------------
+brewStarbucksFile = function(dir, base) {
+  var content, path, result;
+  path = mkpath(dir, base);
+  debug(`brew file ${base} in directory ${dir}`);
+  content = slurp(path);
   debug("CONTENT:", content);
   result = starbucks({
     content,
-    filename: filepath
+    filename: base
   });
-  barf(withExt(filepath, '.svelte'), untabify(result.code));
-  log(`BREW: ${filepath} -> *.svelte`);
+  barf(withExt(path, '.svelte'), untabify(result.code));
+  debug(`BREW: ${path} -> *.svelte`);
+};
+
+// ---------------------------------------------------------------------------
+brewCieloFile = function(dir, base) {
+  var content, path;
+  path = mkpath(dir, base);
+  debug(`brew file ${base} in directory ${dir}`);
+  content = slurp(path);
+  debug("CONTENT:", content);
+  //	result = starbucks({content, filename: base})
+  barf(withExt(path, '.coffee'), result);
+  debug(`BREW: ${path} -> *.coffee`);
 };
 
 // ---------------------------------------------------------------------------
