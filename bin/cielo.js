@@ -1,7 +1,9 @@
-// brew.coffee
+#!/usr/bin/env node
+;
 var brewCieloFileToCoffee, brewCieloFileToJS, brewDirectory, brewStarbucksFile, doCieloToCoffee, doCieloToJS, doStarbucks, dumpDirs, lLoadedEnvPaths, loadEnvironment, main;
 
 import {
+  // cielo.coffee
   strict as assert
 } from 'assert';
 
@@ -86,17 +88,12 @@ loadEnvironment = function(dir) {
 main = function() {
   var base, dir, ent, ext, hArgs, i, j, lArgs, lPaths, len, len1, orgPath, path, ref;
   lArgs = process.argv.slice(2);
-  //	console.log "ARGS:"
-  //	console.dir lArgs
   hArgs = parseArgs(lArgs, {
     boolean: words('c j s h d'),
     unknown: function(opt) {
       return true;
     }
   });
-  //	console.log "hArgs:"
-  //	console.dir hArgs
-
   // --- Handle request for help
   if (hArgs.h) {
     console.log("cielo dir or file");

@@ -1,4 +1,6 @@
-# brew.coffee
+`#!/usr/bin/env node
+`
+# cielo.coffee
 
 import {strict as assert} from 'assert'
 import {existsSync, lstatSync} from 'fs'
@@ -45,17 +47,12 @@ loadEnvironment = (dir) ->
 main = () ->
 
 	lArgs = process.argv.slice(2)
-#	console.log "ARGS:"
-#	console.dir lArgs
 
 	hArgs = parseArgs(lArgs, {
 			boolean: words('c j s h d'),
 			unknown: (opt) ->
 				return true
 			})
-
-#	console.log "hArgs:"
-#	console.dir hArgs
 
 	# --- Handle request for help
 	if hArgs.h

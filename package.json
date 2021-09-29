@@ -1,19 +1,21 @@
 {
-	"name": "@jdeighan/brew",
-	"version": "3.0.3",
+	"name": "@jdeighan/cielo",
+	"version": "3.0.5",
 	"type": "module",
 	"preferGlobal": true,
 	"bin": {
-		"cielo": "./bin/brew.js"
+		"cielo": "./bin/cielo.js"
 	},
-	"description": "command to process Starbucks files",
-	"main": "./bin/brew.js",
+	"description": "command to process *.cielo and *.starbucks files",
+	"main": "./bin/cielo.js",
 	"scripts": {
 		"build": "coffee --bare --no-header -c .",
-		"pretest": "coffee --bare --no-header -c . && node ./bin/brew.js ./test",
+		"pretest": "coffee --bare --no-header -c . && node ./bin/cielo.js ./test",
 		"test": "ava ./test/*.test.js",
-		"prefinaltest": "cls && coffee --bare --no-header -c . && node ./bin/brew.js ./test",
-		"finaltest": "cross-env FINALTEST=yes ava ./test/*.test.js"
+		"prefinaltest": "cls && coffee --bare --no-header -c . && node ./bin/cielo.js ./test",
+		"finaltest": "cross-env FINALTEST=yes ava ./test/*.test.js",
+		"precielo": "coffee --bare --no-header -c .",
+		"cielo": "node ./bin/cielo.js"
 	},
 	"keywords": [
 		"svelte",
