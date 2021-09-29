@@ -1,0 +1,15 @@
+#starbucks webpage
+
+TopMenu lItems={lItems}
+
+script
+	lItems = [
+		{ label: 'Home', url: '/'},
+		{ label: 'Help', url: '/help'},
+		]
+
+# --- NEED:
+#     - .env file containing:
+#          COMPONENTS_DIR = $DIR_ROOT/components
+#     - subdirectory named 'components'
+#     - a file in that directory named 'TopMenu.starbucks'

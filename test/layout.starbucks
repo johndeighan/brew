@@ -1,0 +1,38 @@
+#starbucks webpage
+
+nav
+	TopMenu lItems={<<<}
+		---
+		-
+			label: Home
+			url: /
+		-
+			label: Help
+			lItems:
+				-
+					label: About
+					url: /about
+				-
+					label: Contact
+					url: /contact
+
+main
+	slot
+
+footer web page by {{author}}
+
+style
+
+	nav
+		grid-area: top
+		text-align: center
+
+	main
+		grid-area: middle
+		overflow: auto
+		margin: 5px
+
+	footer
+		grid-area: bottom
+		text-align: center
+		background-color: yellow

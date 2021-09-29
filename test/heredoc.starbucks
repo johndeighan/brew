@@ -1,0 +1,16 @@
+#starbucks webpage
+
+nav lItems={<<<}
+	---
+	-
+		label: Home
+		url: /
+	-
+		label: Help
+		lItems:
+			-
+				label: About
+				url: /about
+			-
+				label: Contact
+				url: /contact

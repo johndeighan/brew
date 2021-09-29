@@ -159,7 +159,8 @@ brewStarbucksFile = (dir, base) ->
 
 brewCieloFileToCoffee = (dir, base) ->
 
-	code = slurp(mkpath(dir, base))
+	path = mkpath(dir, base)
+	code = slurp(path)
 	newcode = brewCielo(code)
 	newpath = withExt(path, '.coffee')
 	barf newpath, newcode

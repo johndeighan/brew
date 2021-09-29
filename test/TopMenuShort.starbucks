@@ -1,0 +1,11 @@
+#starbucks component (hItem)
+
+# TopMenuShort.starbucks
+
+div.main
+	#if hItem.url
+		a href={hItem.url}
+	#elsif hItem.lItems
+		div.dropdown
+	#else
+		nav

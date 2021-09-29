@@ -197,8 +197,9 @@ brewStarbucksFile = function(dir, base) {
 
 // ---------------------------------------------------------------------------
 brewCieloFileToCoffee = function(dir, base) {
-  var code, newcode, newpath;
-  code = slurp(mkpath(dir, base));
+  var code, newcode, newpath, path;
+  path = mkpath(dir, base);
+  code = slurp(path);
   newcode = brewCielo(code);
   newpath = withExt(path, '.coffee');
   barf(newpath, newcode);
