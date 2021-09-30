@@ -166,7 +166,8 @@ brewCieloFileToCoffee = (dir, base) ->
 
 brewCieloFileToJS = (dir, base) ->
 
-	content = slurp(mkpath(dir, base))
+	path = mkpath(dir, base)
+	content = slurp(path)
 	barf withExt(path, '.coffee'), result
 	debug "BREW: #{path} -> *.coffee"
 	return

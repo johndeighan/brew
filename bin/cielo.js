@@ -204,8 +204,9 @@ brewCieloFileToCoffee = function(dir, base) {
 
 // ---------------------------------------------------------------------------
 brewCieloFileToJS = function(dir, base) {
-  var content;
-  content = slurp(mkpath(dir, base));
+  var content, path;
+  path = mkpath(dir, base);
+  content = slurp(path);
   barf(withExt(path, '.coffee'), result);
   debug(`BREW: ${path} -> *.coffee`);
 };
