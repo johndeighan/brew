@@ -52,13 +52,12 @@ import {
 } from '@jdeighan/env';
 
 import {
-  brewCielo,
-  brewCoffee
-} from '@jdeighan/string-input/coffee';
-
-import {
   starbucks
 } from '@jdeighan/starbucks';
+
+import {
+  brewCielo
+} from './brewCielo.js';
 
 /*
 	cielo [-c | -j | -s | -h | -d ] (<dir> | <file>)+
@@ -193,20 +192,21 @@ brewStarbucksFile = function(dir, base) {
 
 // ---------------------------------------------------------------------------
 brewCieloFileToCoffee = function(dir, base) {
-  var code, newcode, newpath, path;
+  var code, coffeeCode, newpath, path;
   path = mkpath(dir, base);
   code = slurp(path);
-  newcode = brewCielo(code);
+  coffeeCode = brewCielo(code);
   newpath = withExt(path, '.coffee');
-  barf(newpath, newcode);
-  debug(`BREW: ${path} -> ${newpath}`);
+  barf(newpath, coffeeCode);
+  debug(`BREW to coffee: ${path} -> ${newpath}`);
 };
 
 // ---------------------------------------------------------------------------
 brewCieloFileToJS = function(dir, base) {
-  var content, path;
+  var code, coffeeCode, path;
   path = mkpath(dir, base);
-  content = slurp(path);
+  code = slurp(path);
+  coffeeCode = brewCielo(code);
   barf(withExt(path, '.coffee'), result);
   debug(`BREW: ${path} -> *.coffee`);
 };

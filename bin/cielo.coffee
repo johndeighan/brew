@@ -15,8 +15,8 @@ import {
 	} from '@jdeighan/coffee-utils/debug'
 import {untabify} from '@jdeighan/coffee-utils/indent'
 import {loadEnvFrom} from '@jdeighan/env'
-import {brewCielo, brewCoffee} from '@jdeighan/string-input/coffee'
 import {starbucks} from '@jdeighan/starbucks'
+import {brewCielo} from './brewCielo.js'
 
 ###
 	cielo [-c | -j | -s | -h | -d ] (<dir> | <file>)+
@@ -156,10 +156,10 @@ brewCieloFileToCoffee = (dir, base) ->
 
 	path = mkpath(dir, base)
 	code = slurp(path)
-	newcode = brewCielo(code)
+	coffeeCode = brewCielo(code)
 	newpath = withExt(path, '.coffee')
-	barf newpath, newcode
-	debug "BREW: #{path} -> #{newpath}"
+	barf newpath, coffeeCode
+	debug "BREW to coffee: #{path} -> #{newpath}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -167,7 +167,8 @@ brewCieloFileToCoffee = (dir, base) ->
 brewCieloFileToJS = (dir, base) ->
 
 	path = mkpath(dir, base)
-	content = slurp(path)
+	code = slurp(path)
+	coffeeCode = brewCielo(code)
 	barf withExt(path, '.coffee'), result
 	debug "BREW: #{path} -> *.coffee"
 	return

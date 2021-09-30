@@ -1,12 +1,23 @@
-// brew.test.coffee
-var CieloTester, StarbucksTester, starbucksTester;
+// cielo.test.coffee
+var CieloTester, cieloTester, dir, simple;
 
 import {
   strict as assert
 } from 'assert';
 
 import {
-  slurp,
+  undef,
+  pass,
+  isEmpty,
+  isComment
+} from '@jdeighan/coffee-utils';
+
+import {
+  debug,
+  setDebugging
+} from '@jdeighan/coffee-utils/debug';
+
+import {
   mydir,
   mkpath
 } from '@jdeighan/coffee-utils/fs';
@@ -16,237 +27,132 @@ import {
 } from '@jdeighan/coffee-utils/test';
 
 import {
-  log
-} from '@jdeighan/coffee-utils/log';
+  brewCielo
+} from '../bin/brewCielo.js';
 
-import {
-  brewCielo,
-  brewCoffee
-} from '@jdeighan/string-input/coffee';
+dir = mydir(import.meta.url);
 
-import {
-  starbucks
-} from '@jdeighan/starbucks';
+process.env.DIR_MARKDOWN = mkpath(dir, 'markdown');
 
-import {
-  loadEnvFrom
-} from '@jdeighan/env';
+process.env.DIR_DATA = mkpath(dir, 'data');
 
-loadEnvFrom(mydir(import.meta.url));
+simple = new UnitTester();
 
-// ---------------------------------------------------------------------------
-StarbucksTester = class StarbucksTester extends UnitTester {
-  transformValue(code) {
-    var result;
-    result = starbucks({
-      content: code
-    });
-    return result.code;
-  }
-
-};
-
-starbucksTester = new StarbucksTester();
-
-// ---------------------------------------------------------------------------
-starbucksTester.equal(26, `#starbucks webpage
-
-nav`, `<nav>
-</nav>`);
-
-// ---------------------------------------------------------------------------
-starbucksTester.equal(37, `#starbucks webpage
-
-nav lItems={<<<}
-	---
-	-
-		label: Home
-		url: /
-	-
-		label: Help
-		lItems:
-			-
-				label: About
-				url: /about
-			-
-				label: Contact
-				url: /contact`, `<nav lItems={__anonVar0}>
-</nav>
-<script>
-	import {taml} from '@jdeighan/string-input/taml'
-	var __anonVar0;
-
-	__anonVar0 = taml(\`---
--
-	label: Home
-	url: /
--
-	label: Help
-	lItems:
-		-
-			label: About
-			url: /about
-		-
-			label: Contact
-			url: /contact\`);
-</script>`);
-
-// ---------------------------------------------------------------------------
-starbucksTester.equal(79, `#starbucks webpage
-
-nav
-	TopMenu lItems={<<<}
-		---
-		-
-			label: Home
-			url: /
-		-
-			label: Help
-			lItems:
-				-
-					label: About
-					url: /about
-				-
-					label: Contact
-					url: /contact
-
-main
-	slot
-
-footer web page by {{author}}
-
-style
-
-	nav
-		grid-area: top
-		text-align: center
-
-	main
-		grid-area: middle
-		overflow: auto
-		margin: 5px
-
-	footer
-		grid-area: bottom
-		text-align: center
-		background-color: yellow`, `<nav>
-	<TopMenu lItems={__anonVar0}>
-	</TopMenu>
-</nav>
-<main>
-	<slot>
-	</slot>
-</main>
-<footer>
-	web page by
-</footer>
-<script>
-	import {taml} from '@jdeighan/string-input/taml'
-	var __anonVar0;
-
-	import TopMenu from 'C:/Users/johnd/cielo/test/components/TopMenu.svelte';
-
-	__anonVar0 = taml(\`---
-	-
-		label: Home
-		url: /
-	-
-		label: Help
-		lItems:
-			-
-				label: About
-				url: /about
-			-
-				label: Contact
-				url: /contact\`);
-</script>
-<style>
-	nav {
-		grid-area: top;
-		text-align: center;
-	}
-
-	main {
-		grid-area: middle;
-		overflow: auto;
-		margin: 5px;
-	}
-
-	footer {
-		grid-area: bottom;
-		text-align: center;
-		background-color: yellow;
-	}
-</style>`);
-
-// ---------------------------------------------------------------------------
-starbucksTester.equal(174, `#starbucks component (hItem)
-
-# TopMenuShort.starbucks
-
-div.main
-	#if hItem.url
-		a href={hItem.url}
-	#elsif hItem.lItems
-		div.dropdown
-	#else
-		nav`, `<div class="main">
-	{#if hItem.url}
-		<a href={hItem.url}>
-		</a>
-	{:else if hItem.lItems}
-		<div class="dropdown">
-		</div>
-	{:else}
-		<nav>
-		</nav>
-	{/if}
-</div>
-<script>
-	export var hItem = undef;
-</script>`);
-
-// ---------------------------------------------------------------------------
-starbucksTester.equal(206, `#starbucks webpage
-
-TopMenu lItems={lItems}
-
-script
-	lItems = [
-		{ label: 'Home', url: '/'},
-		{ label: 'Help', url: '/help'},
-		]`, `<TopMenu lItems={lItems}>
-</TopMenu>
-<script>
-	var lItems;
-
-	import TopMenu from 'C:/Users/johnd/cielo/test/components/TopMenu.svelte';
-
-	lItems = [
-		{
-			label: 'Home',
-			url: '/'
-			},
-		{
-			label: 'Help',
-			url: '/help'
-			}
-		];
-</script>`);
-
-// ---------------------------------------------------------------------------
+/*
+	brewCielo() should handle the following:
+		- should NOT remove blank lines and comments
+		- #include <file> statements, when DIR_* env vars are set
+		- patch {{FILE}} with the name of the input file
+		- patch {{LINE}} with the line number
+		- handle continuation lines
+		- handle HEREDOC - a single '.' on a line is a blank line
+		- add auto-imports
+*/
 // ---------------------------------------------------------------------------
 CieloTester = class CieloTester extends UnitTester {
   transformValue(code) {
-    return brewCielo(code);
+    return brewCielo(code, 'coffee');
+  }
+
+  normalize(line) { // disable normalizing, to check proper indentation
+    return line;
   }
 
 };
 
-export var cieloTester = new CieloTester();
+cieloTester = new CieloTester();
 
 // ---------------------------------------------------------------------------
-cieloTester.equal(219, `import {undef, pass} from '@jdeighan/coffee-utils'
+// --- Should NOT remove blank lines and comments
+cieloTester.equal(45, `x = 42
+# --- a blank line
+
+console.log x`, `x = 42
+# --- a blank line
+
+console.log x`);
+
+// ---------------------------------------------------------------------------
+// --- maintain indentation - simple
+cieloTester.equal(60, `if (x==42)
+	console.log x`, `if (x==42)
+	console.log x`);
+
+// ---------------------------------------------------------------------------
+// --- maintain indentation - complex
+cieloTester.equal(71, `x = 42
+if (x==42)
+	console.log x
+	if (x > 100)
+		console.log "x is big"`, `x = 42
+if (x==42)
+	console.log x
+	if (x > 100)
+		console.log "x is big"`);
+
+// ---------------------------------------------------------------------------
+// --- handle #include of *.txt files
+cieloTester.equal(88, `if (x==42)
+	#include code.txt`, `if (x==42)
+	y = 5
+	if (y > 100)
+		console.log "y is big"`);
+
+// ---------------------------------------------------------------------------
+// --- patch {{LINE}} and {{FILE}}
+cieloTester.equal(101, `if (x==42)
+	log "line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
+if (x==42)
+	log "line 2 in unit test"`);
+
+// ---------------------------------------------------------------------------
+// --- handle continuation lines
+cieloTester.equal(113, `if
+			(x==42)
+	log
+			"line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
+if (x==42)
+	log "line 4 in unit test"`);
+
+// ---------------------------------------------------------------------------
+// --- handle HEREDOC
+cieloTester.equal(127, `if (x=='<<<')
+	abc
+
+	log "line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
+if (x=='abc')
+	log "line 4 in unit test"`);
+
+// --- a '---' starting a HEREDOC means interpret as TAML,
+//             return as JSON.stringify()
+cieloTester.equal(141, `if (x==<<<)
+	---
+	abc
+
+	log "line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
+if (x=="abc")
+	log "line 5 in unit test"`);
+
+// --- NOTE: the following 2 tests are really the same thing
+cieloTester.equal(155, `if (x=="<<<")
+	abc
+	def
+
+	log "line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
+if (x=="abc\ndef")
+	log "line 5 in unit test"`);
+
+cieloTester.equal(167, `if (x=="<<<")
+	abc
+	def
+
+	log "line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
+if (x=="abc
+def")
+	log "line 5 in unit test"`);
+
+// ---------------------------------------------------------------------------
+cieloTester.equal(182, `import {undef, pass} from '@jdeighan/coffee-utils'
 import {slurp, barf} from '@jdeighan/coffee-utils/fs'
 
 try
@@ -259,3 +165,5 @@ try
 	contents = slurp('myfile.txt')
 if (contents == undef)
 	print "File does not exist"`);
+
+// ---------------------------------------------------------------------------

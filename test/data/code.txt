@@ -1,0 +1,3 @@
+y = 5
+if (y > 100)
+	console.log "y is big"
