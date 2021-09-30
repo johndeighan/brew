@@ -1,5 +1,5 @@
-// `#!/usr/bin/env node
-// `
+#!/usr/bin/env node
+;
 var brew, brewDirectory, doCieloToCoffee, doCieloToJS, doLog, doStarbucks, dumpDirs, lLoadedEnvPaths, loadEnvironment, main;
 
 import {

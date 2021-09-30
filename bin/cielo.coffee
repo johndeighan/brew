@@ -1,5 +1,5 @@
-# `#!/usr/bin/env node
-# `
+`#!/usr/bin/env node
+`
 import {strict as assert} from 'assert'
 import {existsSync, lstatSync} from 'fs'
 import {parse} from 'path'
