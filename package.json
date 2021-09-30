@@ -9,12 +9,12 @@
 	"description": "command to process *.cielo and *.starbucks files",
 	"main": "./bin/cielo.js",
 	"scripts": {
-		"build": "coffee --bare --no-header -c .",
+		"build": "coffee -c .",
 		"pretest": "cls && coffee --bare --no-header -c .",
 		"test": "ava ./test/*.test.js",
 		"prefinaltest": "cls && coffee --bare --no-header -c .",
 		"finaltest": "cross-env FINALTEST=yes ava ./test/*.test.js",
-		"precielo": "coffee --bare --no-header -c .",
+		"precielo": "coffee -c .",
 		"cielo": "node ./bin/cielo.js"
 	},
 	"keywords": [

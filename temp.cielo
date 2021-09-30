@@ -1,0 +1,7 @@
+import {undef, pass} from '@jdeighan/coffee-utils'
+import {slurp, barf} from '@jdeighan/coffee-utils/fs'
+
+try
+	contents = slurp('myfile.txt')
+if (contents == undef)
+	print "File does not exist"

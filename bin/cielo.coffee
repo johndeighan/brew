@@ -1,5 +1,5 @@
-`#!/usr/bin/env node
-`
+# `#!/usr/bin/env node
+# `
 import {strict as assert} from 'assert'
 import {existsSync, lstatSync} from 'fs'
 import {parse} from 'path'
@@ -19,13 +19,14 @@ import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
 
 ###
-	cielo [-c | -j | -s | -h | -d ] (<dir> | <file>)+
+	cielo [-c | -j | -s | -h | -d | -D ] (<dir> | <file>)+
 ###
 
 # --- default settings
 doCieloToCoffee = false
 doCieloToJS = true
 doStarbucks = true
+doLog = false
 
 # ---------------------------------------------------------------------------
 
@@ -44,10 +45,8 @@ loadEnvironment = (dir) ->
 
 main = () ->
 
-	lArgs = process.argv.slice(2)
-
-	hArgs = parseArgs(lArgs, {
-			boolean: words('c j s h d'),
+	hArgs = parseArgs(process.argv.slice(2), {
+			boolean: words('c j s h d D'),
 			unknown: (opt) ->
 				return true
 			})
@@ -58,10 +57,16 @@ main = () ->
 		console.log "   -c convert *.cielo to *.coffee files"
 		console.log "   -j convert *.cielo to *.js files"
 		console.log "   -s convert *.starbucks to *.svelte files"
+		console.log "   -d print every file processed"
+		console.log "   -D turn on debugging (a lot of output!)"
 		console.log "   -h help"
 		process.exit()
 
 	if hArgs.d
+		doLog = true
+		log "hArgs", hArgs
+
+	if hArgs.D
 		setDebugging true
 
 	# --- If neither -c, -j or -s are set, we'll process both types of files
@@ -73,13 +78,13 @@ main = () ->
 		doCieloToJS = hArgs.j
 		doStarbucks = hArgs.s
 
-	if (hArgs._.length == 0)
-		croak "Missing file/directory name on command line"
+#	if (hArgs._.length == 0)
+#		croak "Missing file/directory name on command line"
 
 	# --- Resolve paths, checking that they all exist
 	lPaths = []
 	for orgPath in hArgs._
-		debug "brew(): orgPath = '#{orgPath}'"
+		debug "cielo(): orgPath = '#{orgPath}'"
 		path = getFullPath(orgPath)  # resolve relative paths
 		debug "resolved to '#{path}'"
 
@@ -96,12 +101,12 @@ main = () ->
 			loadEnvironment dir
 
 			if (ext == '.starbucks')
-				brewStarbucksFile(dir, base)
+				brew(dir, base, '.starbucks', '.svelte')
 			else if (ext == '.cielo')
 				if doCieloToCoffee
-					brewCieloFileToCoffee(dir, base)
+					brew(dir, base, '.cielo', '.coffee')
 				else
-					brewCieloFileToJS(dir, base)
+					brew(dir, base, '.cielo', '.js')
 			else
 				croak "Can't brew #{base}"
 		else if ent.isDirectory()
@@ -119,21 +124,21 @@ brewDirectory = (dir) ->
 
 	if doCieloToCoffee
 		cbCieloToCoffee = (base, dir, level) ->
-			brewCieloFileToCoffee(dir, base)
+			brew(dir, base, '.cielo', '.coffee')
 			return
 
 		forEachFile(dir, cbCieloToCoffee, /\.cielo$/)
 
 	if doCieloToJS
 		cbCieloToJS = (base, dir, level) ->
-			brewCieloFileToJS(dir, base)
+			brew(dir, base, '.cielo', '.js')
 			return
 
 		forEachFile(dir, cbCieloToJS, /\.cielo$/)
 
 	if doStarbucks
 		cbStarbucks = (base, dir, level) ->
-			brewStarbucksFile(dir, base)
+			brew(dir, base, '.starbucks', '.svelte')
 			return
 
 		forEachFile(dir, cbStarbucks, /\.starbucks$/)
@@ -141,36 +146,29 @@ brewDirectory = (dir) ->
 
 # ---------------------------------------------------------------------------
 
-brewStarbucksFile = (dir, base) ->
+brew = (dir, filename, srcExt, destExt) ->
 
-	path = mkpath(dir, base)
+	path = mkpath(dir, filename)
 	content = slurp(path)
-	result = starbucks({content, filename: base})
-	barf withExt(path, '.svelte'), untabify(result.code)
-	debug "BREW: #{path} -> *.svelte"
-	return
+	if srcExt == '.starbucks'
+		assert destExt == '.svelte', "brew(): Bad dest ext #{destExt}"
+		result = starbucks({content, filename}).code
+	else if srcExt == '.cielo'
+		if destExt == '.coffee'
+			result = brewCielo(content, 'coffee')
+		else if destExt == '.js'
+			result = brewCielo(content, 'js')
+		else
+			croak "brew(): Unknown dest extension: #{destExt}"
+	else
+		croak "brew(): Unknown source extension: #{srcExt}"
 
-# ---------------------------------------------------------------------------
-
-brewCieloFileToCoffee = (dir, base) ->
-
-	path = mkpath(dir, base)
-	code = slurp(path)
-	coffeeCode = brewCielo(code, 'coffee')
-	newpath = withExt(path, '.coffee')
-	barf newpath, coffeeCode
-	debug "BREW to coffee: #{path} -> #{newpath}"
-	return
-
-# ---------------------------------------------------------------------------
-
-brewCieloFileToJS = (dir, base) ->
-
-	path = mkpath(dir, base)
-	code = slurp(path)
-	coffeeCode = brewCielo(code, 'js')
-	barf withExt(path, '.coffee'), result
-	debug "BREW: #{path} -> *.coffee"
+	outpath = withExt(path, destExt)
+	barf outpath, untabify(result)
+	debug "BREW: #{path} -> #{outpath}"
+	if doLog
+		log dir
+		log "   #{base} => #{withExt(base, outExt)}"
 	return
 
 # ---------------------------------------------------------------------------
