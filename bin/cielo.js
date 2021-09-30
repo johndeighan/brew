@@ -3,7 +3,6 @@
 var brewCieloFileToCoffee, brewCieloFileToJS, brewDirectory, brewStarbucksFile, doCieloToCoffee, doCieloToJS, doStarbucks, dumpDirs, lLoadedEnvPaths, loadEnvironment, main;
 
 import {
-  // cielo.coffee
   strict as assert
 } from 'assert';
 

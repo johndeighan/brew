@@ -10,9 +10,9 @@
 	"main": "./bin/cielo.js",
 	"scripts": {
 		"build": "coffee --bare --no-header -c .",
-		"pretest": "coffee --bare --no-header -c . && node ./bin/cielo.js ./test",
+		"pretest": "cls && coffee --bare --no-header -c .",
 		"test": "ava ./test/*.test.js",
-		"prefinaltest": "cls && coffee --bare --no-header -c . && node ./bin/cielo.js ./test",
+		"prefinaltest": "cls && coffee --bare --no-header -c .",
 		"finaltest": "cross-env FINALTEST=yes ava ./test/*.test.js",
 		"precielo": "coffee --bare --no-header -c .",
 		"cielo": "node ./bin/cielo.js"
@@ -26,8 +26,8 @@
 	"license": "MIT",
 	"dependencies": {
 		"@jdeighan/coffee-utils": "^3.0.4",
-		"@jdeighan/env": "^4.0.3",
-		"@jdeighan/starbucks": "^4.0.4",
+		"@jdeighan/env": "^4.0.4",
+		"@jdeighan/starbucks": "^4.0.5",
 		"cross-env": "^7.0.3",
 		"minimist": "^1.2.5"
 	}

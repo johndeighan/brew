@@ -1,7 +1,5 @@
 `#!/usr/bin/env node
 `
-# cielo.coffee
-
 import {strict as assert} from 'assert'
 import {existsSync, lstatSync} from 'fs'
 import {parse} from 'path'
