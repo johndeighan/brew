@@ -195,7 +195,7 @@ brewCieloFileToCoffee = function(dir, base) {
   var code, coffeeCode, newpath, path;
   path = mkpath(dir, base);
   code = slurp(path);
-  coffeeCode = brewCielo(code);
+  coffeeCode = brewCielo(code, 'coffee');
   newpath = withExt(path, '.coffee');
   barf(newpath, coffeeCode);
   debug(`BREW to coffee: ${path} -> ${newpath}`);
@@ -206,7 +206,7 @@ brewCieloFileToJS = function(dir, base) {
   var code, coffeeCode, path;
   path = mkpath(dir, base);
   code = slurp(path);
-  coffeeCode = brewCielo(code);
+  coffeeCode = brewCielo(code, 'js');
   barf(withExt(path, '.coffee'), result);
   debug(`BREW: ${path} -> *.coffee`);
 };
