@@ -119,9 +119,6 @@ main = function() {
     doCieloToJS = hArgs.j;
     doStarbucks = hArgs.s;
   }
-  //	if (hArgs._.length == 0)
-  //		croak "Missing file/directory name on command line"
-
   // --- Resolve paths, checking that they all exist
   lPaths = [];
   ref = hArgs._;
