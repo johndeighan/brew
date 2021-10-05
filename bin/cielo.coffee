@@ -19,8 +19,7 @@ import {brewCielo} from './brewCielo.js'
 	cielo [-h | -n | -c | -d | -D ]
 ###
 
-doLog = false    # log events
-doWatch = true   # turn off with -n
+doWatch = true      # turn off with -n
 saveCoffee = false
 
 dirRoot = undef
@@ -93,19 +92,19 @@ output = (code, inpath, outExt) ->
 handleCmdArgs = () ->
 
 	hArgs = parseArgs(process.argv.slice(2), {
-			boolean: words('h n c d D'),
+			boolean: words('h n c d'),
 			unknown: (opt) ->
 				return true
 			})
 
 	# --- Handle request for help
 	if hArgs.h
-		log "cielo"
+		log "cielo [ <dir> ]"
 		log "   -h help"
 		log "   -n process files, don't watch for changes"
 		log "   -c save *.coffee file"
-		log "   -d print every file processed"
-		log "   -D turn on debugging (a lot of output!)"
+		log "   -d turn on debugging (a lot of output!)"
+		log "<dir> defaults to current working directory"
 		process.exit()
 
 	if hArgs.n
@@ -117,10 +116,6 @@ handleCmdArgs = () ->
 		saveCoffee = true
 
 	if hArgs.d
-		log "event logging on"
-		doLog = true
-
-	if hArgs.D
 		log "extensive debugging on"
 		setDebugging true
 
