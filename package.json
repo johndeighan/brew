@@ -29,6 +29,7 @@
 		"@jdeighan/env": "^5.1.4",
 		"@jdeighan/starbucks": "^5.0.2",
 		"@jdeighan/string-input": "^6.0.4",
+		"chokidar": "^3.5.2",
 		"cross-env": "^7.0.3",
 		"minimist": "^1.2.5"
 	}
