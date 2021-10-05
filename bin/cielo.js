@@ -71,7 +71,7 @@ main = function() {
   });
   watcher.on('all', function(event, path) {
     var ext, lMatches;
-    if (path.match(/node_modules/)) {
+    if (path.match(/node_modules/) || (event === 'unlink')) {
       return;
     }
     if (lMatches = path.match(/\.(cielo|starbucks)$/)) {

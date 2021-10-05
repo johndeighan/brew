@@ -40,7 +40,7 @@ main = () ->
 
 	watcher.on 'all', (event, path) ->
 
-		if path.match(/node_modules/)
+		if path.match(/node_modules/) || (event == 'unlink')
 			return
 
 		if lMatches = path.match(/\.(cielo|starbucks)$/)
