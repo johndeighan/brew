@@ -8,10 +8,9 @@ import chokidar from 'chokidar'
 import {undef, croak, words} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
-	slurp, barf, forEachFile, withExt, mkpath,
+	slurp, barf, withExt, mkpath,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {untabify} from '@jdeighan/coffee-utils/indent'
 import {loadEnvFrom} from '@jdeighan/env'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
@@ -20,34 +19,40 @@ import {brewCielo} from './brewCielo.js'
 	cielo [-h | -n | -c | -d | -D ]
 ###
 
-doLog = false    # log files processed
+doLog = false    # log events
 doWatch = true   # turn off with -n
 saveCoffee = false
 
-dirRoot = process.cwd()
+dirRoot = undef
 
 # ---------------------------------------------------------------------------
 
 main = () ->
 
 	handleCmdArgs()
+	if not dirRoot?
+		dirRoot = process.cwd()
+	log "ROOT: #{dirRoot}"
 	loadEnvFrom dirRoot
 
-	log "...processing #{dirRoot}"
 	watcher = chokidar.watch(dirRoot, {
 		persistent: doWatch,
 		})
+
 	watcher.on 'all', (event, path) ->
+
 		if path.match(/node_modules/)
 			return
+
 		if lMatches = path.match(/\.(cielo|starbucks)$/)
-			ext = ".#{lMatches[1]}"
-			if doLog
-				console.log event, path
+			ext = lMatches[0]
+			log "#{event} #{fixPath(path)}"
 			if ext == '.cielo'
 				brewCieloFile(path)
-			else if ext == 'starbucks'
+			else if ext == '.starbucks'
 				brewStarbucksFile(path)
+			else
+				croak "Invalid file extension: '#{ext}'"
 
 	return
 
@@ -80,8 +85,7 @@ output = (code, inpath, outExt) ->
 
 	outpath = withExt(inpath, outExt)
 	barf outpath, code
-	if doLog
-		log "   #{inpath} => #{outExt}"
+	log "   #{fixPath(inpath)} => #{outExt}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -113,12 +117,32 @@ handleCmdArgs = () ->
 		saveCoffee = true
 
 	if hArgs.d
-		log "debugging on"
+		log "event logging on"
 		doLog = true
 
 	if hArgs.D
 		log "extensive debugging on"
 		setDebugging true
+
+	if hArgs._?
+		if hArgs._.length == 1
+			dirRoot = hArgs._[0]
+		else if hArgs._.length > 1
+			croak "Only one directory path allowed"
+	return
+
+# ---------------------------------------------------------------------------
+
+fixPath = (path) ->
+
+	str = mkpath(path)
+	if lMatches = str.match(///^
+			c:/Users/[a-z_][a-z0-9_]*/(.*)
+			$///i)
+		[_, tail] = lMatches
+		return "~/#{tail}"
+	else
+		return str
 
 # ---------------------------------------------------------------------------
 

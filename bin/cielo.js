@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -c | -d | -D ]
 */
-var brewCieloFile, brewStarbucksFile, dirRoot, doLog, doWatch, handleCmdArgs, main, output, saveCoffee;
+var brewCieloFile, brewStarbucksFile, dirRoot, doLog, doWatch, fixPath, handleCmdArgs, main, output, saveCoffee;
 
 import {
   strict as assert
@@ -30,7 +30,6 @@ import {
 import {
   slurp,
   barf,
-  forEachFile,
   withExt,
   mkpath
 } from '@jdeighan/coffee-utils/fs';
@@ -39,10 +38,6 @@ import {
   setDebugging,
   debug
 } from '@jdeighan/coffee-utils/debug';
-
-import {
-  untabify
-} from '@jdeighan/coffee-utils/indent';
 
 import {
   loadEnvFrom
@@ -56,20 +51,23 @@ import {
   brewCielo
 } from './brewCielo.js';
 
-doLog = false; // log files processed
+doLog = false; // log events
 
 doWatch = true; // turn off with -n
 
 saveCoffee = false;
 
-dirRoot = process.cwd();
+dirRoot = undef;
 
 // ---------------------------------------------------------------------------
 main = function() {
   var watcher;
   handleCmdArgs();
+  if (dirRoot == null) {
+    dirRoot = process.cwd();
+  }
+  log(`ROOT: ${dirRoot}`);
   loadEnvFrom(dirRoot);
-  log(`...processing ${dirRoot}`);
   watcher = chokidar.watch(dirRoot, {
     persistent: doWatch
   });
@@ -79,14 +77,14 @@ main = function() {
       return;
     }
     if (lMatches = path.match(/\.(cielo|starbucks)$/)) {
-      ext = `.${lMatches[1]}`;
-      if (doLog) {
-        console.log(event, path);
-      }
+      ext = lMatches[0];
+      log(`${event} ${fixPath(path)}`);
       if (ext === '.cielo') {
         return brewCieloFile(path);
-      } else if (ext === 'starbucks') {
+      } else if (ext === '.starbucks') {
         return brewStarbucksFile(path);
+      } else {
+        return croak(`Invalid file extension: '${ext}'`);
       }
     }
   });
@@ -119,9 +117,7 @@ output = function(code, inpath, outExt) {
   var outpath;
   outpath = withExt(inpath, outExt);
   barf(outpath, code);
-  if (doLog) {
-    log(`   ${inpath} => ${outExt}`);
-  }
+  log(`   ${fixPath(inpath)} => ${outExt}`);
 };
 
 // ---------------------------------------------------------------------------
@@ -152,12 +148,31 @@ handleCmdArgs = function() {
     saveCoffee = true;
   }
   if (hArgs.d) {
-    log("debugging on");
+    log("event logging on");
     doLog = true;
   }
   if (hArgs.D) {
     log("extensive debugging on");
-    return setDebugging(true);
+    setDebugging(true);
+  }
+  if (hArgs._ != null) {
+    if (hArgs._.length === 1) {
+      dirRoot = hArgs._[0];
+    } else if (hArgs._.length > 1) {
+      croak("Only one directory path allowed");
+    }
+  }
+};
+
+// ---------------------------------------------------------------------------
+fixPath = function(path) {
+  var _, lMatches, str, tail;
+  str = mkpath(path);
+  if (lMatches = str.match(/^c:\/Users\/[a-z_][a-z0-9_]*\/(.*)$/i)) {
+    [_, tail] = lMatches;
+    return `~/${tail}`;
+  } else {
+    return str;
   }
 };
 
