@@ -17,11 +17,12 @@ import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
 
 ###
-	cielo [-h | -n | -d | -D ]
+	cielo [-h | -n | -c | -d | -D ]
 ###
 
 doLog = false    # log files processed
 doWatch = true   # turn off with -n
+saveCoffee = false
 
 dirRoot = process.cwd()
 
@@ -54,8 +55,10 @@ main = () ->
 
 brewCieloFile = (path) ->
 
-	code = brewCielo(slurp(path), 'js')
-	output code, path, '.js'
+	[coffeeCode, jsCode] = brewCielo(slurp(path), 'both')
+	if saveCoffee
+		output coffeeCode, path, '.coffee'
+	output jsCode, path, '.js'
 	return
 
 # ---------------------------------------------------------------------------
@@ -86,7 +89,7 @@ output = (code, inpath, outExt) ->
 handleCmdArgs = () ->
 
 	hArgs = parseArgs(process.argv.slice(2), {
-			boolean: words('h n d D'),
+			boolean: words('h n c d D'),
 			unknown: (opt) ->
 				return true
 			})
@@ -96,9 +99,18 @@ handleCmdArgs = () ->
 		log "cielo"
 		log "   -h help"
 		log "   -n process files, don't watch for changes"
+		log "   -c save *.coffee file"
 		log "   -d print every file processed"
 		log "   -D turn on debugging (a lot of output!)"
 		process.exit()
+
+	if hArgs.n
+		log "not watching for changes"
+		doWatch = false
+
+	if hArgs.c
+		log "saving coffee files"
+		saveCoffee = true
 
 	if hArgs.d
 		log "debugging on"
@@ -107,10 +119,6 @@ handleCmdArgs = () ->
 	if hArgs.D
 		log "extensive debugging on"
 		setDebugging true
-
-	if hArgs.n
-		log "not watching for changes"
-		doWatch = false
 
 # ---------------------------------------------------------------------------
 

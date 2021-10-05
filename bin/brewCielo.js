@@ -59,7 +59,7 @@ CieloMapper = class CieloMapper extends SmartInput {
 //        7. add auto-imports
 export var brewCielo = function(code, type) {
   var coffeeCode, err, jsCode, lImports, lNeeded, oInput;
-  assert((type === 'coffee') || (type === 'js'), "brewCielo(): bad type");
+  assert((type === 'coffee') || (type === 'js') || (type === 'both'), "brewCielo(): bad type");
   debug("enter brewCielo()");
   assert(indentLevel(code) === 0, "brewCielo(): code has indentation");
   // --- CieloMapper handles the above conversions
@@ -85,5 +85,9 @@ export var brewCielo = function(code, type) {
     croak(err, "Original Code", coffeeCode);
   }
   debug("return from brewCielo()", jsCode);
-  return jsCode;
+  if (type === 'js') {
+    return jsCode;
+  } else if (type === 'both') {
+    return [coffeeCode, jsCode];
+  }
 };

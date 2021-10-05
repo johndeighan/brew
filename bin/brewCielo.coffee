@@ -37,7 +37,8 @@ class CieloMapper extends SmartInput
 
 export brewCielo = (code, type) ->
 
-	assert (type=='coffee') || (type=='js'), "brewCielo(): bad type"
+	assert (type=='coffee') || (type=='js') || (type=='both'),
+		"brewCielo(): bad type"
 	debug "enter brewCielo()"
 	assert (indentLevel(code)==0), "brewCielo(): code has indentation"
 
@@ -62,4 +63,7 @@ export brewCielo = (code, type) ->
 	catch err
 		croak err, "Original Code", coffeeCode
 	debug "return from brewCielo()", jsCode
-	return jsCode
+	if type == 'js'
+		return jsCode
+	else if type == 'both'
+		return [coffeeCode, jsCode]

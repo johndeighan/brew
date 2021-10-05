@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 ;
 /*
-	cielo [-h | -n | -d | -D ]
+	cielo [-h | -n | -c | -d | -D ]
 */
-var brewCieloFile, brewStarbucksFile, dirRoot, doLog, doWatch, handleCmdArgs, main, output;
+var brewCieloFile, brewStarbucksFile, dirRoot, doLog, doWatch, handleCmdArgs, main, output, saveCoffee;
 
 import {
   strict as assert
@@ -60,6 +60,8 @@ doLog = false; // log files processed
 
 doWatch = true; // turn off with -n
 
+saveCoffee = false;
+
 dirRoot = process.cwd();
 
 // ---------------------------------------------------------------------------
@@ -92,9 +94,12 @@ main = function() {
 
 // ---------------------------------------------------------------------------
 brewCieloFile = function(path) {
-  var code;
-  code = brewCielo(slurp(path), 'js');
-  output(code, path, '.js');
+  var coffeeCode, jsCode;
+  [coffeeCode, jsCode] = brewCielo(slurp(path), 'both');
+  if (saveCoffee) {
+    output(coffeeCode, path, '.coffee');
+  }
+  output(jsCode, path, '.js');
 };
 
 // ---------------------------------------------------------------------------
@@ -123,7 +128,7 @@ output = function(code, inpath, outExt) {
 handleCmdArgs = function() {
   var hArgs;
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n d D'),
+    boolean: words('h n c d D'),
     unknown: function(opt) {
       return true;
     }
@@ -133,9 +138,18 @@ handleCmdArgs = function() {
     log("cielo");
     log("   -h help");
     log("   -n process files, don't watch for changes");
+    log("   -c save *.coffee file");
     log("   -d print every file processed");
     log("   -D turn on debugging (a lot of output!)");
     process.exit();
+  }
+  if (hArgs.n) {
+    log("not watching for changes");
+    doWatch = false;
+  }
+  if (hArgs.c) {
+    log("saving coffee files");
+    saveCoffee = true;
   }
   if (hArgs.d) {
     log("debugging on");
@@ -143,11 +157,7 @@ handleCmdArgs = function() {
   }
   if (hArgs.D) {
     log("extensive debugging on");
-    setDebugging(true);
-  }
-  if (hArgs.n) {
-    log("not watching for changes");
-    return doWatch = false;
+    return setDebugging(true);
   }
 };
 
