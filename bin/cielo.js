@@ -40,8 +40,9 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  loadEnvFrom
-} from '@jdeighan/env';
+  loadEnvLibFrom,
+  hEnv
+} from '@jdeighan/env/lib';
 
 import {
   starbucks
@@ -65,7 +66,7 @@ main = function() {
     dirRoot = process.cwd();
   }
   log(`ROOT: ${dirRoot}`);
-  loadEnvFrom(dirRoot);
+  loadEnvLibFrom(dirRoot);
   watcher = chokidar.watch(dirRoot, {
     persistent: doWatch
   });

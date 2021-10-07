@@ -27,14 +27,22 @@ import {
 } from '@jdeighan/coffee-utils/test';
 
 import {
+  hEnvLib
+} from '@jdeighan/coffee-utils/envlib';
+
+import {
+  loadEnvLibFrom
+} from '@jdeighan/env';
+
+import {
   brewCielo
 } from '../bin/brewCielo.js';
 
 dir = mydir(import.meta.url);
 
-process.env.DIR_MARKDOWN = mkpath(dir, 'markdown');
+hEnvLib.DIR_MARKDOWN = mkpath(dir, 'markdown');
 
-process.env.DIR_DATA = mkpath(dir, 'data');
+hEnvLib.DIR_DATA = mkpath(dir, 'data');
 
 simple = new UnitTester();
 

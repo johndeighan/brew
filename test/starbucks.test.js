@@ -24,14 +24,18 @@ import {
 } from '@jdeighan/starbucks';
 
 import {
-  loadEnvFrom
+  hEnvLib
+} from '@jdeighan/coffee-utils/envlib';
+
+import {
+  loadEnvLibFrom
 } from '@jdeighan/env';
 
 import {
   brewCielo
 } from '../bin/brewCielo.js';
 
-loadEnvFrom(mydir(import.meta.url));
+loadEnvLibFrom(mydir(import.meta.url));
 
 // ---------------------------------------------------------------------------
 StarbucksTester = class StarbucksTester extends UnitTester {

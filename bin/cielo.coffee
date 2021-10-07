@@ -3,7 +3,7 @@
 import {strict as assert} from 'assert'
 import parseArgs from 'minimist'
 import {parse as parsePath} from 'path'
-import chokidar from 'chokidar'
+import chokidar from 'chokidar'         # file watcher
 
 import {undef, croak, words} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
@@ -11,7 +11,7 @@ import {
 	slurp, barf, withExt, mkpath,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {loadEnvFrom} from '@jdeighan/env'
+import {loadEnvLibFrom, hEnv} from '@jdeighan/env/lib'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
 
@@ -32,7 +32,7 @@ main = () ->
 	if not dirRoot?
 		dirRoot = process.cwd()
 	log "ROOT: #{dirRoot}"
-	loadEnvFrom dirRoot
+	loadEnvLibFrom dirRoot
 
 	watcher = chokidar.watch(dirRoot, {
 		persistent: doWatch,
