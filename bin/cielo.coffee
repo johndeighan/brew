@@ -11,7 +11,7 @@ import {
 	slurp, barf, withExt, mkpath,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {loadEnvLibFrom, hEnv} from '@jdeighan/env/lib'
+import {loadEnvLibFrom} from '@jdeighan/env'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
 

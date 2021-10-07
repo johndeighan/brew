@@ -40,9 +40,8 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  loadEnvLibFrom,
-  hEnv
-} from '@jdeighan/env/lib';
+  loadEnvLibFrom
+} from '@jdeighan/env';
 
 import {
   starbucks
