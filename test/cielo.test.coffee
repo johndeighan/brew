@@ -8,13 +8,13 @@ import {
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {mydir, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
-import {hEnvLib} from '@jdeighan/coffee-utils/envlib'
-import {loadEnvLibFrom} from '@jdeighan/env'
+import {hPrivEnv} from '@jdeighan/coffee-utils/privenv'
+import {loadPrivEnvFrom} from '@jdeighan/env'
 import {brewCielo} from '../bin/brewCielo.js'
 
 dir = mydir(`import.meta.url`)
-hEnvLib.DIR_MARKDOWN = mkpath(dir, 'markdown')
-hEnvLib.DIR_DATA = mkpath(dir, 'data')
+hPrivEnv.DIR_MARKDOWN = mkpath(dir, 'markdown')
+hPrivEnv.DIR_DATA = mkpath(dir, 'data')
 
 simple = new UnitTester()
 

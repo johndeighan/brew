@@ -11,7 +11,7 @@ import {
 	slurp, barf, withExt, mkpath,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {loadEnvLibFrom} from '@jdeighan/env'
+import {loadPrivEnvFrom} from '@jdeighan/env'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
 
@@ -32,7 +32,7 @@ main = () ->
 	if not dirRoot?
 		dirRoot = process.cwd()
 	log "ROOT: #{dirRoot}"
-	loadEnvLibFrom dirRoot
+	loadPrivEnvFrom dirRoot
 
 	watcher = chokidar.watch(dirRoot, {
 		persistent: doWatch,

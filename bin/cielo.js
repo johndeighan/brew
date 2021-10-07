@@ -40,7 +40,7 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  loadEnvLibFrom
+  loadPrivEnvFrom
 } from '@jdeighan/env';
 
 import {
@@ -65,7 +65,7 @@ main = function() {
     dirRoot = process.cwd();
   }
   log(`ROOT: ${dirRoot}`);
-  loadEnvLibFrom(dirRoot);
+  loadPrivEnvFrom(dirRoot);
   watcher = chokidar.watch(dirRoot, {
     persistent: doWatch
   });

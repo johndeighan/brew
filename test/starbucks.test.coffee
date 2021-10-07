@@ -6,11 +6,10 @@ import {slurp, mydir, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {log} from '@jdeighan/coffee-utils/log'
 import {starbucks} from '@jdeighan/starbucks'
-import {hEnvLib} from '@jdeighan/coffee-utils/envlib'
-import {loadEnvLibFrom} from '@jdeighan/env'
+import {loadPrivEnvFrom} from '@jdeighan/env'
 import {brewCielo} from '../bin/brewCielo.js'
 
-loadEnvLibFrom(mydir(`import.meta.url`))
+loadPrivEnvFrom(mydir(`import.meta.url`))
 
 # ---------------------------------------------------------------------------
 
