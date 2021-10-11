@@ -21,6 +21,7 @@ import {brewCielo} from './brewCielo.js'
 
 doWatch = true      # turn off with -n
 dirRoot = undef
+specialChar = '%'
 
 # ---------------------------------------------------------------------------
 
@@ -77,7 +78,7 @@ brewStarbucksFile = (path) ->
 
 # ---------------------------------------------------------------------------
 
-output = (code, inpath, outExt, losech='#') ->
+output = (code, inpath, outExt, losech=specialChar) ->
 
 	outpath = withExt(inpath, outExt)
 	if losech

@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -c | -d | -D ]
 */
-var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, fixPath, main, output, parseCmdArgs;
+var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, fixPath, main, output, parseCmdArgs, specialChar;
 
 import {
   strict as assert
@@ -54,6 +54,8 @@ import {
 doWatch = true; // turn off with -n
 
 dirRoot = undef;
+
+specialChar = '%';
 
 // ---------------------------------------------------------------------------
 main = function() {
@@ -107,7 +109,7 @@ brewStarbucksFile = function(path) {
 };
 
 // ---------------------------------------------------------------------------
-output = function(code, inpath, outExt, losech = '#') {
+output = function(code, inpath, outExt, losech = specialChar) {
   var outpath;
   outpath = withExt(inpath, outExt);
   if (losech) {
