@@ -20,15 +20,13 @@ import {brewCielo} from './brewCielo.js'
 ###
 
 doWatch = true      # turn off with -n
-saveCoffee = false
-
 dirRoot = undef
 
 # ---------------------------------------------------------------------------
 
 main = () ->
 
-	handleCmdArgs()
+	parseCmdArgs()
 	if not dirRoot?
 		dirRoot = process.cwd()
 	log "ROOT: #{dirRoot}"
@@ -60,8 +58,7 @@ main = () ->
 brewCieloFile = (path) ->
 
 	[coffeeCode, jsCode] = brewCielo(slurp(path), 'both')
-	if saveCoffee
-		output coffeeCode, path, '.coffee'
+	output coffeeCode, path, '.coffee', undef  # write to shadow dir
 	output jsCode, path, '.js'
 	return
 
@@ -80,19 +77,21 @@ brewStarbucksFile = (path) ->
 
 # ---------------------------------------------------------------------------
 
-output = (code, inpath, outExt) ->
+output = (code, inpath, outExt, losech='#') ->
 
 	outpath = withExt(inpath, outExt)
+	if losech
+		outpath = outpath.replace(losech, '')
 	barf outpath, code
 	log "   #{fixPath(inpath)} => #{outExt}"
 	return
 
 # ---------------------------------------------------------------------------
 
-handleCmdArgs = () ->
+parseCmdArgs = () ->
 
 	hArgs = parseArgs(process.argv.slice(2), {
-			boolean: words('h n c d'),
+			boolean: words('h n d'),
 			unknown: (opt) ->
 				return true
 			})
@@ -102,7 +101,6 @@ handleCmdArgs = () ->
 		log "cielo [ <dir> ]"
 		log "   -h help"
 		log "   -n process files, don't watch for changes"
-		log "   -c save *.coffee file"
 		log "   -d turn on debugging (a lot of output!)"
 		log "<dir> defaults to current working directory"
 		process.exit()
@@ -110,10 +108,6 @@ handleCmdArgs = () ->
 	if hArgs.n
 		log "not watching for changes"
 		doWatch = false
-
-	if hArgs.c
-		log "saving coffee files"
-		saveCoffee = true
 
 	if hArgs.d
 		log "extensive debugging on"

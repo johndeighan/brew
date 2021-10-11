@@ -116,7 +116,7 @@ if (x==42)
 // ---------------------------------------------------------------------------
 // --- handle continuation lines
 cieloTester.equal(113, `if
-			(x==42)
+		(x==42)
 	log
 			"line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
 if (x==42)

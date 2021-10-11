@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -c | -d | -D ]
 */
-var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, fixPath, handleCmdArgs, main, output, saveCoffee;
+var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, fixPath, main, output, parseCmdArgs;
 
 import {
   strict as assert
@@ -53,14 +53,12 @@ import {
 
 doWatch = true; // turn off with -n
 
-saveCoffee = false;
-
 dirRoot = undef;
 
 // ---------------------------------------------------------------------------
 main = function() {
   var watcher;
-  handleCmdArgs();
+  parseCmdArgs();
   if (dirRoot == null) {
     dirRoot = process.cwd();
   }
@@ -92,9 +90,7 @@ main = function() {
 brewCieloFile = function(path) {
   var coffeeCode, jsCode;
   [coffeeCode, jsCode] = brewCielo(slurp(path), 'both');
-  if (saveCoffee) {
-    output(coffeeCode, path, '.coffee');
-  }
+  output(coffeeCode, path, '.coffee', undef); // write to shadow dir
   output(jsCode, path, '.js');
 };
 
@@ -111,18 +107,21 @@ brewStarbucksFile = function(path) {
 };
 
 // ---------------------------------------------------------------------------
-output = function(code, inpath, outExt) {
+output = function(code, inpath, outExt, losech = '#') {
   var outpath;
   outpath = withExt(inpath, outExt);
+  if (losech) {
+    outpath = outpath.replace(losech, '');
+  }
   barf(outpath, code);
   log(`   ${fixPath(inpath)} => ${outExt}`);
 };
 
 // ---------------------------------------------------------------------------
-handleCmdArgs = function() {
+parseCmdArgs = function() {
   var hArgs;
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n c d'),
+    boolean: words('h n d'),
     unknown: function(opt) {
       return true;
     }
@@ -132,7 +131,6 @@ handleCmdArgs = function() {
     log("cielo [ <dir> ]");
     log("   -h help");
     log("   -n process files, don't watch for changes");
-    log("   -c save *.coffee file");
     log("   -d turn on debugging (a lot of output!)");
     log("<dir> defaults to current working directory");
     process.exit();
@@ -140,10 +138,6 @@ handleCmdArgs = function() {
   if (hArgs.n) {
     log("not watching for changes");
     doWatch = false;
-  }
-  if (hArgs.c) {
-    log("saving coffee files");
-    saveCoffee = true;
   }
   if (hArgs.d) {
     log("extensive debugging on");

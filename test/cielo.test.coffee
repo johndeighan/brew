@@ -114,7 +114,7 @@ cieloTester.equal 101, """
 
 cieloTester.equal 113, """
 		if
-					(x==42)
+				(x==42)
 			log
 					"line {{LINE}} in {{FILE}}"
 		""", """
