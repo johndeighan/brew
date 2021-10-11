@@ -10,9 +10,9 @@ cielo -h
 Usage:
 
 ```text
-cielo ( <dir> or <file> ) +
-   -c convert *.cielo to *.coffee files
-   -j convert *.cielo to *.js files
-   -s convert *.starbucks to *.svelte files
-   -h help"
+cielo [ <dir> ]
+   -h help
+   -n process files, don't watch for changes
+   -d turn on debugging (a lot of output!)
+<dir> defaults to current working directory
 ```
