@@ -92,8 +92,8 @@ main = function() {
 brewCieloFile = function(path) {
   var coffeeCode, jsCode;
   [coffeeCode, jsCode] = brewCielo(slurp(path), 'both');
-  output(coffeeCode, path, '.coffee', undef); // write to shadow dir
-  output(jsCode, path, '.js');
+  output(coffeeCode, path, '.coffee');
+  output(jsCode, path, '.js', true);
 };
 
 // ---------------------------------------------------------------------------
@@ -105,15 +105,15 @@ brewStarbucksFile = function(path) {
     filename: hParsed.base
   };
   code = starbucks(hOptions).code;
-  output(code, path, '.svelte');
+  output(code, path, '.svelte', true);
 };
 
 // ---------------------------------------------------------------------------
-output = function(code, inpath, outExt, losech = specialChar) {
+output = function(code, inpath, outExt, toRealDir = false) {
   var outpath;
   outpath = withExt(inpath, outExt);
-  if (losech) {
-    outpath = outpath.replace(losech, '');
+  if (toRealDir) {
+    outpath = outpath.replace(specialChar, '');
   }
   barf(outpath, code);
   log(`   ${fixPath(inpath)} => ${outExt}`);
