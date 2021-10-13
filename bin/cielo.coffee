@@ -32,10 +32,9 @@ main = () ->
 	if not dirRoot?
 		dirRoot = process.cwd()
 	log "ROOT: #{dirRoot}"
-	logPrivEnv()
 
-	# --- Dump out the private environment
-	console.dir hPrivEnv
+	loadPrivEnvFrom(dirRoot)
+	logPrivEnv()
 
 	watcher = chokidar.watch(dirRoot, {
 		persistent: doWatch,
@@ -56,6 +55,8 @@ main = () ->
 			else
 				croak "Invalid file extension: '#{ext}'"
 
+	if ! doWatch
+		log "...not watching for further file changes"
 	return
 
 # ---------------------------------------------------------------------------
@@ -111,7 +112,6 @@ parseCmdArgs = () ->
 		process.exit()
 
 	if hArgs.n
-		log "not watching for changes"
 		doWatch = false
 
 	if hArgs.d

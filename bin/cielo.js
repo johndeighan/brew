@@ -70,9 +70,8 @@ main = function() {
     dirRoot = process.cwd();
   }
   log(`ROOT: ${dirRoot}`);
+  loadPrivEnvFrom(dirRoot);
   logPrivEnv();
-  // --- Dump out the private environment
-  console.dir(hPrivEnv);
   watcher = chokidar.watch(dirRoot, {
     persistent: doWatch
   });
@@ -93,6 +92,9 @@ main = function() {
       }
     }
   });
+  if (!doWatch) {
+    log("...not watching for further file changes");
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -145,7 +147,6 @@ parseCmdArgs = function() {
     process.exit();
   }
   if (hArgs.n) {
-    log("not watching for changes");
     doWatch = false;
   }
   if (hArgs.d) {
