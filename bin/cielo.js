@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 ;
 /*
-	cielo [-h | -n | -c | -d | -D ]
+	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, fixPath, main, output, parseCmdArgs, specialChar;
+var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, specialChar;
 
 import {
   strict as assert
@@ -58,6 +58,8 @@ import {
 
 doWatch = true; // turn off with -n
 
+envOnly = false; // set with -e
+
 dirRoot = undef;
 
 specialChar = '%';
@@ -72,6 +74,9 @@ main = function() {
   log(`ROOT: ${dirRoot}`);
   loadPrivEnvFrom(dirRoot);
   logPrivEnv();
+  if (envOnly) {
+    process.exit();
+  }
   watcher = chokidar.watch(dirRoot, {
     persistent: doWatch
   });
@@ -132,7 +137,7 @@ output = function(code, inpath, outExt, expose = false) {
 parseCmdArgs = function() {
   var hArgs;
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n d'),
+    boolean: words('h n e d'),
     unknown: function(opt) {
       return true;
     }
@@ -142,12 +147,16 @@ parseCmdArgs = function() {
     log("cielo [ <dir> ]");
     log("   -h help");
     log("   -n process files, don't watch for changes");
+    log("   -e just display custom environment variables");
     log("   -d turn on debugging (a lot of output!)");
     log("<dir> defaults to current working directory");
     process.exit();
   }
   if (hArgs.n) {
     doWatch = false;
+  }
+  if (hArgs.e) {
+    envOnly = true;
   }
   if (hArgs.d) {
     log("extensive debugging on");
