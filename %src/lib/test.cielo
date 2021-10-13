@@ -1,7 +1,0 @@
-# --- test.cielo
-
-log "line {{LINE}} in {{FILE}}"
-if
-		(x==42)
-	log
-			"line {{LINE}} in {{FILE}}"
