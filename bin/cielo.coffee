@@ -11,6 +11,7 @@ import {
 	slurp, barf, withExt, mkpath,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
+import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
 import {loadPrivEnvFrom} from '@jdeighan/env'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
@@ -31,7 +32,10 @@ main = () ->
 	if not dirRoot?
 		dirRoot = process.cwd()
 	log "ROOT: #{dirRoot}"
-	loadPrivEnvFrom dirRoot
+	logPrivEnv()
+
+	# --- Dump out the private environment
+	console.dir hPrivEnv
 
 	watcher = chokidar.watch(dirRoot, {
 		persistent: doWatch,

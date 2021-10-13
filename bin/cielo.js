@@ -40,6 +40,11 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
+  hPrivEnv,
+  logPrivEnv
+} from '@jdeighan/coffee-utils/privenv';
+
+import {
   loadPrivEnvFrom
 } from '@jdeighan/env';
 
@@ -65,7 +70,9 @@ main = function() {
     dirRoot = process.cwd();
   }
   log(`ROOT: ${dirRoot}`);
-  loadPrivEnvFrom(dirRoot);
+  logPrivEnv();
+  // --- Dump out the private environment
+  console.dir(hPrivEnv);
   watcher = chokidar.watch(dirRoot, {
     persistent: doWatch
   });

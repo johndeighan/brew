@@ -25,10 +25,10 @@
 	"author": "John Deighan",
 	"license": "MIT",
 	"dependencies": {
-		"@jdeighan/coffee-utils": "^4.0.1",
-		"@jdeighan/env": "^6.0.2",
-		"@jdeighan/starbucks": "^6.0.3",
-		"@jdeighan/string-input": "^7.0.1",
+		"@jdeighan/coffee-utils": "^4.0.2",
+		"@jdeighan/env": "^6.0.3",
+		"@jdeighan/starbucks": "^6.0.4",
+		"@jdeighan/string-input": "^7.0.2",
 		"chokidar": "^3.5.2",
 		"cross-env": "^7.0.3",
 		"minimist": "^1.2.5"
