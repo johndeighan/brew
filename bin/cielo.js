@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, specialChar;
+var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs;
 
 import {
   strict as assert
@@ -14,6 +14,11 @@ import parseArgs from 'minimist';
 import {
   parse as parsePath
 } from 'path';
+
+import {
+  existsSync,
+  statSync
+} from 'fs';
 
 import chokidar from 'chokidar';
 
@@ -62,8 +67,6 @@ envOnly = false; // set with -e
 
 dirRoot = undef;
 
-specialChar = '%';
-
 // ---------------------------------------------------------------------------
 main = function() {
   var watcher;
@@ -104,7 +107,18 @@ main = function() {
 
 // ---------------------------------------------------------------------------
 brewCieloFile = function(path) {
-  var coffeeCode, jsCode;
+  var cieloModTime, coffeeCode, jsCode, jsModTime, outpath;
+  outpath = withExt(path, '.js');
+  if (existsSync(outpath)) {
+    jsModTime = statSync(outpath).mtimeMs;
+    debug(`   jsModTime = ${jsModTime}`);
+    cieloModTime = statSync(path).mtimeMs;
+    debug(`   cieloModTime = ${cieloModTime}`);
+    if (jsModTime >= cieloModTime) {
+      log(`   ${fixPath(path)} '.js' is up to date`);
+      return;
+    }
+  }
   [coffeeCode, jsCode] = brewCielo(slurp(path), 'both');
   output(coffeeCode, path, '.coffee');
   output(jsCode, path, '.js', true);
@@ -112,7 +126,18 @@ brewCieloFile = function(path) {
 
 // ---------------------------------------------------------------------------
 brewStarbucksFile = function(path) {
-  var code, hOptions, hParsed;
+  var code, hOptions, hParsed, outpath, starbucksModTime, svelteModTime;
+  outpath = withExt(path, '.svelte').replace('_', '');
+  if (existsSync(outpath)) {
+    svelteModTime = statSync(outpath).mtimeMs;
+    debug(`   svelteModTime = ${svelteModTime}`);
+    starbucksModTime = statSync(path).mtimeMs;
+    debug(`   starbucksModTime = ${starbucksModTime}`);
+    if (svelteModTime >= starbucksModTime) {
+      log(`   ${fixPath(path)} '.svelte' is up to date`);
+      return;
+    }
+  }
   hParsed = parsePath(path);
   hOptions = {
     content: slurp(path),
@@ -127,7 +152,7 @@ output = function(code, inpath, outExt, expose = false) {
   var outpath;
   outpath = withExt(inpath, outExt);
   if (expose) {
-    outpath = outpath.replace(specialChar, '').replace('_', '');
+    outpath = outpath.replace('_', '');
   }
   barf(outpath, code);
   log(`   ${fixPath(inpath)} => ${outExt}`);
