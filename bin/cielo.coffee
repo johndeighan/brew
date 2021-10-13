@@ -35,8 +35,8 @@ main = () ->
 	log "ROOT: #{dirRoot}"
 
 	loadPrivEnvFrom(dirRoot)
-	logPrivEnv()
 	if envOnly
+		logPrivEnv()
 		process.exit()
 
 	watcher = chokidar.watch(dirRoot, {
