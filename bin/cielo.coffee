@@ -78,11 +78,11 @@ brewStarbucksFile = (path) ->
 
 # ---------------------------------------------------------------------------
 
-output = (code, inpath, outExt, toRealDir=false) ->
+output = (code, inpath, outExt, expose=false) ->
 
 	outpath = withExt(inpath, outExt)
-	if toRealDir
-		outpath = outpath.replace(specialChar, '')
+	if expose
+		outpath = outpath.replace(specialChar, '').replace('_', '')
 	barf outpath, code
 	log "   #{fixPath(inpath)} => #{outExt}"
 	return

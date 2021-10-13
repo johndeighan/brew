@@ -109,11 +109,11 @@ brewStarbucksFile = function(path) {
 };
 
 // ---------------------------------------------------------------------------
-output = function(code, inpath, outExt, toRealDir = false) {
+output = function(code, inpath, outExt, expose = false) {
   var outpath;
   outpath = withExt(inpath, outExt);
-  if (toRealDir) {
-    outpath = outpath.replace(specialChar, '');
+  if (expose) {
+    outpath = outpath.replace(specialChar, '').replace('_', '');
   }
   barf(outpath, code);
   log(`   ${fixPath(inpath)} => ${outExt}`);
