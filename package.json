@@ -26,8 +26,8 @@
 	"license": "MIT",
 	"dependencies": {
 		"@jdeighan/coffee-utils": "^4.0.6",
-		"@jdeighan/env": "^6.0.7",
-		"@jdeighan/starbucks": "^6.0.10",
+		"@jdeighan/env": "^6.0.8",
+		"@jdeighan/starbucks": "^6.0.11",
 		"@jdeighan/string-input": "^7.0.7",
 		"chokidar": "^3.5.2",
 		"cross-env": "^7.0.3",
