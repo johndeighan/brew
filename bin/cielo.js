@@ -119,17 +119,19 @@ brewTamlFile = function(srcPath) {
   var destPath, hParsed, tamlCode;
   destPath = withExt(srcPath, '.js');
   if (newerDestFileExists(srcPath, destPath)) {
+    log("   dest exists");
     return;
   }
   hParsed = parsePath(srcPath);
   if (hParsed.dir !== hPrivEnv.DIR_STORES) {
+    log(`   ${hParsed.dir} is not ${hPrivEnv.DIR_STORES}`);
     return;
   }
   tamlCode = slurp(srcPath);
-  barf(destPath, `import {TAMLDataStore} from '@jdeighan/starbucks/stores'
+  output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
 oz = new TAMLDataStore(\`
 	${tamlCode}
-	\`);`);
+	\`);`, srcPath, '.js');
 };
 
 // ---------------------------------------------------------------------------
@@ -137,6 +139,7 @@ brewCieloFile = function(srcPath) {
   var coffeeCode, destPath, jsCode;
   destPath = withExt(srcPath, '.js');
   if (newerDestFileExists(srcPath, destPath)) {
+    log("   dest exists");
     return;
   }
   [coffeeCode, jsCode] = brewCielo(slurp(srcPath), 'both');
@@ -149,6 +152,7 @@ brewStarbucksFile = function(srcPath) {
   var code, destPath, hOptions, hParsed;
   destPath = withExt(srcPath, '.svelte').replace('_', '');
   if (newerDestFileExists(srcPath, destPath)) {
+    log("   dest exists");
     return;
   }
   hParsed = parsePath(srcPath);

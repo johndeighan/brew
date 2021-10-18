@@ -72,18 +72,20 @@ brewTamlFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.js')
 	if newerDestFileExists(srcPath, destPath)
+		log "   dest exists"
 		return
 	hParsed = parsePath(srcPath)
 	if (hParsed.dir != hPrivEnv.DIR_STORES)
+		log "   #{hParsed.dir} is not #{hPrivEnv.DIR_STORES}"
 		return
 
 	tamlCode = slurp(srcPath)
-	barf(destPath, """
+	output("""
 		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
 		oz = new TAMLDataStore(`
 			#{tamlCode}
 			`);
-		""")
+		""", srcPath, '.js')
 	return
 
 # ---------------------------------------------------------------------------
@@ -92,6 +94,7 @@ brewCieloFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.js')
 	if newerDestFileExists(srcPath, destPath)
+		log "   dest exists"
 		return
 	[coffeeCode, jsCode] = brewCielo(slurp(srcPath), 'both')
 	output coffeeCode, srcPath, '.coffee'
@@ -104,6 +107,7 @@ brewStarbucksFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.svelte').replace('_', '')
 	if newerDestFileExists(srcPath, destPath)
+		log "   dest exists"
 		return
 	hParsed = parsePath(srcPath)
 	hOptions = {
