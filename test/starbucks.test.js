@@ -143,7 +143,7 @@ style
 	import {taml} from '@jdeighan/string-input/taml'
 	var __anonVar0;
 
-	import TopMenu from 'C:/Users/johnd/cielo/test/components/TopMenu.svelte';
+	import TopMenu from 'c:/Users/johnd/cielo/test/components/TopMenu.svelte';
 
 	__anonVar0 = taml(\`---
 	-
@@ -219,7 +219,7 @@ script
 <script>
 	var lItems;
 
-	import TopMenu from 'C:/Users/johnd/cielo/test/components/TopMenu.svelte';
+	import TopMenu from 'c:/Users/johnd/cielo/test/components/TopMenu.svelte';
 
 	lItems = [
 		{

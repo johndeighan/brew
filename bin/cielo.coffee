@@ -77,7 +77,7 @@ brewTamlFile = (srcPath) ->
 	hParsed = parsePath(srcPath)
 	srcDir = mkpath(hParsed.dir)
 	if (srcDir != hPrivEnv.DIR_STORES)
-		log "   #{hParsed.dir} is not #{hPrivEnv.DIR_STORES}"
+		log "   #{srcDir} is not #{hPrivEnv.DIR_STORES}"
 		return
 
 	tamlCode = slurp(srcPath)

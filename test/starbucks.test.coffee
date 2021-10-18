@@ -132,7 +132,7 @@ starbucksTester.equal 79, """
 			import {taml} from '@jdeighan/string-input/taml'
 			var __anonVar0;
 
-			import TopMenu from 'C:/Users/johnd/cielo/test/components/TopMenu.svelte';
+			import TopMenu from 'c:/Users/johnd/cielo/test/components/TopMenu.svelte';
 
 			__anonVar0 = taml(`---
 			-
@@ -218,7 +218,7 @@ starbucksTester.equal 206, """
 		<script>
 			var lItems;
 
-			import TopMenu from 'C:/Users/johnd/cielo/test/components/TopMenu.svelte';
+			import TopMenu from 'c:/Users/johnd/cielo/test/components/TopMenu.svelte';
 
 			lItems = [
 				{
