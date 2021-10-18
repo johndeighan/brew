@@ -1,0 +1,15 @@
+# file.cielo
+
+simple = new UnitTester()
+
+# ---------------------------------------------------------------------------
+# --- Should NOT remove blank lines and comments
+
+simple.equal {{LINE}}, """
+		x = 42
+		""", """
+		x = 42
+		"""
+__END__
+
+This is just plain old garbage
