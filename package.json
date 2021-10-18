@@ -1,6 +1,6 @@
 {
 	"name": "@jdeighan/cielo",
-	"version": "7.0.21",
+	"version": "7.0.22",
 	"type": "module",
 	"preferGlobal": true,
 	"bin": {
