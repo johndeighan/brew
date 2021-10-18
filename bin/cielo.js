@@ -116,14 +116,15 @@ main = function() {
 
 // ---------------------------------------------------------------------------
 brewTamlFile = function(srcPath) {
-  var destPath, hParsed, tamlCode;
+  var destPath, hParsed, srcDir, tamlCode;
   destPath = withExt(srcPath, '.js');
   if (newerDestFileExists(srcPath, destPath)) {
     log("   dest exists");
     return;
   }
   hParsed = parsePath(srcPath);
-  if (hParsed.dir !== hPrivEnv.DIR_STORES) {
+  srcDir = mkpath(hParsed.dir);
+  if (srcDir !== hPrivEnv.DIR_STORES) {
     log(`   ${hParsed.dir} is not ${hPrivEnv.DIR_STORES}`);
     return;
   }

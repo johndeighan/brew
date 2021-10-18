@@ -75,7 +75,8 @@ brewTamlFile = (srcPath) ->
 		log "   dest exists"
 		return
 	hParsed = parsePath(srcPath)
-	if (hParsed.dir != hPrivEnv.DIR_STORES)
+	srcDir = mkpath(hParsed.dir)
+	if (srcDir != hPrivEnv.DIR_STORES)
 		log "   #{hParsed.dir} is not #{hPrivEnv.DIR_STORES}"
 		return
 
