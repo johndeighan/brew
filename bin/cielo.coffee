@@ -9,11 +9,12 @@ import chokidar from 'chokidar'         # file watcher
 import {undef, croak, words} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
-	slurp, barf, withExt, mkpath,
+	slurp, barf, withExt, mkpath, newerDestFileExists,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
 import {loadPrivEnvFrom} from '@jdeighan/env'
+import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo} from './brewCielo.js'
 
@@ -48,13 +49,15 @@ main = () ->
 		if path.match(/node_modules/) || (event == 'unlink')
 			return
 
-		if lMatches = path.match(/\.(cielo|starbucks)$/)
+		if lMatches = path.match(/\.(cielo|starbucks|taml)$/)
 			ext = lMatches[0]
 			log "#{event} #{fixPath(path)}"
 			if ext == '.cielo'
 				brewCieloFile(path)
 			else if ext == '.starbucks'
 				brewStarbucksFile(path)
+			else if ext == '.taml'
+				brewTamlFile(path)
 			else
 				croak "Invalid file extension: '#{ext}'"
 
@@ -64,53 +67,61 @@ main = () ->
 
 # ---------------------------------------------------------------------------
 
-brewCieloFile = (path) ->
+brewTamlFile = (srcPath) ->
 
-	outpath = withExt(path, '.js')
-	if existsSync(outpath)
-		jsModTime = statSync(outpath).mtimeMs
-		debug "   jsModTime = #{jsModTime}"
-		cieloModTime = statSync(path).mtimeMs
-		debug "   cieloModTime = #{cieloModTime}"
-		if jsModTime >= cieloModTime
-			log "   #{fixPath(path)} '.js' is up to date"
-			return
-	[coffeeCode, jsCode] = brewCielo(slurp(path), 'both')
-	output coffeeCode, path, '.coffee'
-	output jsCode, path, '.js', true
+	destPath = withExt(srcPath, '.js')
+	if newerDestFileExists(srcPath, destPath)
+		return
+	hParsed = parsePath(srcPath)
+	if (hParsed.dir != hPrivEnv.DIR_STORES)
+		return
+
+	tamlCode = slurp(srcPath)
+	barf(destPath, """
+		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
+		oz = new TAMLDataStore(`
+			#{tamlCode}
+			`);
+		""")
 	return
 
 # ---------------------------------------------------------------------------
 
-brewStarbucksFile = (path) ->
+brewCieloFile = (srcPath) ->
 
-	outpath = withExt(path, '.svelte').replace('_', '')
-	if existsSync(outpath)
-		svelteModTime = statSync(outpath).mtimeMs
-		debug "   svelteModTime = #{svelteModTime}"
-		starbucksModTime = statSync(path).mtimeMs
-		debug "   starbucksModTime = #{starbucksModTime}"
-		if svelteModTime >= starbucksModTime
-			log "   #{fixPath(path)} '.svelte' is up to date"
-			return
-	hParsed = parsePath(path)
+	destPath = withExt(srcPath, '.js')
+	if newerDestFileExists(srcPath, destPath)
+		return
+	[coffeeCode, jsCode] = brewCielo(slurp(srcPath), 'both')
+	output coffeeCode, srcPath, '.coffee'
+	output jsCode, srcPath, '.js', true
+	return
+
+# ---------------------------------------------------------------------------
+
+brewStarbucksFile = (srcPath) ->
+
+	destPath = withExt(srcPath, '.svelte').replace('_', '')
+	if newerDestFileExists(srcPath, destPath)
+		return
+	hParsed = parsePath(srcPath)
 	hOptions = {
-		content: slurp(path),
+		content: slurp(srcPath),
 		filename: hParsed.base,
 		}
 	code = starbucks(hOptions).code
-	output code, path, '.svelte', true
+	output code, srcPath, '.svelte', true
 	return
 
 # ---------------------------------------------------------------------------
 
-output = (code, inpath, outExt, expose=false) ->
+output = (code, srcPath, outExt, expose=false) ->
 
-	outpath = withExt(inpath, outExt)
+	destPath = withExt(srcPath, outExt)
 	if expose
-		outpath = outpath.replace('_', '')
-	barf outpath, code
-	log "   #{fixPath(inpath)} => #{outExt}"
+		destPath = destPath.replace('_', '')
+	barf destPath, code
+	log "   #{fixPath(srcPath)} => #{outExt}"
 	return
 
 # ---------------------------------------------------------------------------

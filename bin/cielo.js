@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewStarbucksFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs;
+var brewCieloFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs;
 
 import {
   strict as assert
@@ -36,7 +36,8 @@ import {
   slurp,
   barf,
   withExt,
-  mkpath
+  mkpath,
+  newerDestFileExists
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -52,6 +53,11 @@ import {
 import {
   loadPrivEnvFrom
 } from '@jdeighan/env';
+
+import {
+  isTAML,
+  taml
+} from '@jdeighan/string-input/taml';
 
 import {
   starbucks
@@ -88,13 +94,15 @@ main = function() {
     if (path.match(/node_modules/) || (event === 'unlink')) {
       return;
     }
-    if (lMatches = path.match(/\.(cielo|starbucks)$/)) {
+    if (lMatches = path.match(/\.(cielo|starbucks|taml)$/)) {
       ext = lMatches[0];
       log(`${event} ${fixPath(path)}`);
       if (ext === '.cielo') {
         return brewCieloFile(path);
       } else if (ext === '.starbucks') {
         return brewStarbucksFile(path);
+      } else if (ext === '.taml') {
+        return brewTamlFile(path);
       } else {
         return croak(`Invalid file extension: '${ext}'`);
       }
@@ -106,56 +114,60 @@ main = function() {
 };
 
 // ---------------------------------------------------------------------------
-brewCieloFile = function(path) {
-  var cieloModTime, coffeeCode, jsCode, jsModTime, outpath;
-  outpath = withExt(path, '.js');
-  if (existsSync(outpath)) {
-    jsModTime = statSync(outpath).mtimeMs;
-    debug(`   jsModTime = ${jsModTime}`);
-    cieloModTime = statSync(path).mtimeMs;
-    debug(`   cieloModTime = ${cieloModTime}`);
-    if (jsModTime >= cieloModTime) {
-      log(`   ${fixPath(path)} '.js' is up to date`);
-      return;
-    }
+brewTamlFile = function(srcPath) {
+  var destPath, hParsed, tamlCode;
+  destPath = withExt(srcPath, '.js');
+  if (newerDestFileExists(srcPath, destPath)) {
+    return;
   }
-  [coffeeCode, jsCode] = brewCielo(slurp(path), 'both');
-  output(coffeeCode, path, '.coffee');
-  output(jsCode, path, '.js', true);
+  hParsed = parsePath(srcPath);
+  if (hParsed.dir !== hPrivEnv.DIR_STORES) {
+    return;
+  }
+  tamlCode = slurp(srcPath);
+  barf(destPath, `import {TAMLDataStore} from '@jdeighan/starbucks/stores'
+oz = new TAMLDataStore(\`
+	${tamlCode}
+	\`);`);
 };
 
 // ---------------------------------------------------------------------------
-brewStarbucksFile = function(path) {
-  var code, hOptions, hParsed, outpath, starbucksModTime, svelteModTime;
-  outpath = withExt(path, '.svelte').replace('_', '');
-  if (existsSync(outpath)) {
-    svelteModTime = statSync(outpath).mtimeMs;
-    debug(`   svelteModTime = ${svelteModTime}`);
-    starbucksModTime = statSync(path).mtimeMs;
-    debug(`   starbucksModTime = ${starbucksModTime}`);
-    if (svelteModTime >= starbucksModTime) {
-      log(`   ${fixPath(path)} '.svelte' is up to date`);
-      return;
-    }
+brewCieloFile = function(srcPath) {
+  var coffeeCode, destPath, jsCode;
+  destPath = withExt(srcPath, '.js');
+  if (newerDestFileExists(srcPath, destPath)) {
+    return;
   }
-  hParsed = parsePath(path);
+  [coffeeCode, jsCode] = brewCielo(slurp(srcPath), 'both');
+  output(coffeeCode, srcPath, '.coffee');
+  output(jsCode, srcPath, '.js', true);
+};
+
+// ---------------------------------------------------------------------------
+brewStarbucksFile = function(srcPath) {
+  var code, destPath, hOptions, hParsed;
+  destPath = withExt(srcPath, '.svelte').replace('_', '');
+  if (newerDestFileExists(srcPath, destPath)) {
+    return;
+  }
+  hParsed = parsePath(srcPath);
   hOptions = {
-    content: slurp(path),
+    content: slurp(srcPath),
     filename: hParsed.base
   };
   code = starbucks(hOptions).code;
-  output(code, path, '.svelte', true);
+  output(code, srcPath, '.svelte', true);
 };
 
 // ---------------------------------------------------------------------------
-output = function(code, inpath, outExt, expose = false) {
-  var outpath;
-  outpath = withExt(inpath, outExt);
+output = function(code, srcPath, outExt, expose = false) {
+  var destPath;
+  destPath = withExt(srcPath, outExt);
   if (expose) {
-    outpath = outpath.replace('_', '');
+    destPath = destPath.replace('_', '');
   }
-  barf(outpath, code);
-  log(`   ${fixPath(inpath)} => ${outExt}`);
+  barf(destPath, code);
+  log(`   ${fixPath(srcPath)} => ${outExt}`);
 };
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,31 @@
+---
+title:
+	en: The Wizard of Oz
+	zh: 绿野仙踪
+	pinyin: lǜ yě xiān zōng
+author:
+	en: L. Frank Baum
+lCharacters:
+	-
+		en: Dorothy
+		zh: 多萝西
+		pinyin: duō luó xī
+	-
+		en: Toto
+		zh: 托托
+		pinyin: tuō tuō
+lParagraphs:
+	-
+		lSentences:
+		-
+			en: There once was a girl named Dorothy.
+			zh: 从前有个小姑娘叫多萝西.
+			pinyin: cóngqián yǒu gè xiǎo gūniáng jiào duō luó xī.
+		-
+			en: She lived in the midst of a great prarie in Kansas with her uncle and aunt.
+			zh: 她和叔叔婶婶住在堪萨斯大草原上.
+			pinyin: tā hé shūshu shěnshen zhù zài kānsàsī dà cǎoyuán shàng.
+		-
+			en: One day, a strong cyclone brought Dorothy, her dog Toto and her wooden cabin together to the sky.
+			zh: 一天飓风把多萝西和小狗托托连同她住的小木屋一起吹走了.
+			pinyin: yītiān jùfēng bǎ duō luó xī hé xiǎo gǒu tuō tuō liántóng tā zhù de xiǎo mùwū yīqǐ chuī zǒule.
