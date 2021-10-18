@@ -37,6 +37,7 @@ main = () ->
 
 	loadPrivEnvFrom(dirRoot)
 	if envOnly
+		log "DIR_ROOT = '#{dirRoot}'"
 		logPrivEnv()
 		process.exit()
 

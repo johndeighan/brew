@@ -83,6 +83,7 @@ main = function() {
   log(`ROOT: ${dirRoot}`);
   loadPrivEnvFrom(dirRoot);
   if (envOnly) {
+    log(`DIR_ROOT = '${dirRoot}'`);
     logPrivEnv();
     process.exit();
   }
