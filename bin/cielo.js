@@ -99,6 +99,7 @@ main = function() {
   watcher.on('all', function(event, path) {
     var ext, lMatches;
     if (event === 'ready') {
+      rebuildTamlStores();
       readySeen = true;
       return;
     }
@@ -145,7 +146,8 @@ brewTamlFile = function(srcPath) {
   }
   tamlCode = slurp(srcPath);
   output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
-oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
+.
+export oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------

@@ -49,6 +49,7 @@ main = () ->
 	watcher.on 'all', (event, path) ->
 
 		if event == 'ready'
+			rebuildTamlStores()
 			readySeen = true
 			return
 
@@ -92,7 +93,8 @@ brewTamlFile = (srcPath) ->
 	tamlCode = slurp(srcPath)
 	output("""
 		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
-		oz = new TAMLDataStore(`#{tamlCode}`);
+		.
+		export oz = new TAMLDataStore(`#{tamlCode}`);
 		""", srcPath, destPath)
 	return
 
