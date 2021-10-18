@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs;
+var brewCieloFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, readySeen, rebuildTamlStores;
 
 import {
   strict as assert
@@ -17,7 +17,8 @@ import {
 
 import {
   existsSync,
-  statSync
+  statSync,
+  unlinkSync
 } from 'fs';
 
 import chokidar from 'chokidar';
@@ -37,6 +38,7 @@ import {
   barf,
   withExt,
   mkpath,
+  forEachFile,
   newerDestFileExists
 } from '@jdeighan/coffee-utils/fs';
 
@@ -73,6 +75,9 @@ envOnly = false; // set with -e
 
 dirRoot = undef;
 
+readySeen = false; // set true when 'ready' event is seen
+
+
 // ---------------------------------------------------------------------------
 main = function() {
   var watcher;
@@ -92,6 +97,10 @@ main = function() {
   });
   watcher.on('all', function(event, path) {
     var ext, lMatches;
+    if (event === 'ready') {
+      readySeen = true;
+      return;
+    }
     if (path.match(/node_modules/) || (event === 'unlink')) {
       return;
     }
@@ -103,7 +112,10 @@ main = function() {
       } else if (ext === '.starbucks') {
         return brewStarbucksFile(path);
       } else if (ext === '.taml') {
-        return brewTamlFile(path);
+        brewTamlFile(path);
+        if (readySeen) {
+          return rebuildTamlStores();
+        }
       } else {
         return croak(`Invalid file extension: '${ext}'`);
       }
@@ -131,6 +143,27 @@ brewTamlFile = function(srcPath) {
   tamlCode = slurp(srcPath);
   output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
 oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, '.js');
+};
+
+// ---------------------------------------------------------------------------
+rebuildTamlStores = function() {
+  var addLine, dir, lLines, tamlStoresPath;
+  dir = hPrivEnv.DIR_STORES;
+  tamlStoresPath = mkpath(dir, 'tamlStores.js');
+  if (existsSync(tamlStoresPath)) {
+    unlinkSync(tamlStoresPath);
+  }
+  lLines = [];
+  addLine = function(filename, dir, level) {
+    var stub;
+    if (filename === 'tamlStores.js') {
+      return;
+    }
+    stub = filename.substr(0, filename.length - 3);
+    return lLines.push(`import {${stub}DataStore} from '${filename}';`);
+  };
+  forEachFile(dir, addLine, /\.js$/);
+  barf(tamlStoresPath, lLines.join("\n") + "\n");
 };
 
 // ---------------------------------------------------------------------------

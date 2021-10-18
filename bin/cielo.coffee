@@ -3,13 +3,13 @@
 import {strict as assert} from 'assert'
 import parseArgs from 'minimist'
 import {parse as parsePath} from 'path'
-import {existsSync, statSync} from 'fs'
+import {existsSync, statSync, unlinkSync} from 'fs'
 import chokidar from 'chokidar'         # file watcher
 
 import {undef, croak, words} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
-	slurp, barf, withExt, mkpath, newerDestFileExists,
+	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
@@ -25,6 +25,7 @@ import {brewCielo} from './brewCielo.js'
 doWatch = true      # turn off with -n
 envOnly = false     # set with -e
 dirRoot = undef
+readySeen = false   # set true when 'ready' event is seen
 
 # ---------------------------------------------------------------------------
 
@@ -47,6 +48,10 @@ main = () ->
 
 	watcher.on 'all', (event, path) ->
 
+		if event == 'ready'
+			readySeen = true
+			return
+
 		if path.match(/node_modules/) || (event == 'unlink')
 			return
 
@@ -59,6 +64,8 @@ main = () ->
 				brewStarbucksFile(path)
 			else if ext == '.taml'
 				brewTamlFile(path)
+				if readySeen
+					rebuildTamlStores()
 			else
 				croak "Invalid file extension: '#{ext}'"
 
@@ -85,6 +92,26 @@ brewTamlFile = (srcPath) ->
 		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
 		oz = new TAMLDataStore(`#{tamlCode}`);
 		""", srcPath, '.js')
+	return
+
+# ---------------------------------------------------------------------------
+
+rebuildTamlStores = () ->
+
+	dir = hPrivEnv.DIR_STORES
+	tamlStoresPath = mkpath(dir, 'tamlStores.js')
+	if existsSync(tamlStoresPath)
+		unlinkSync tamlStoresPath
+
+	lLines = []
+	addLine = (filename, dir, level) ->
+		if filename == 'tamlStores.js'
+			return
+		stub = filename.substr(0, filename.length - 3)
+		lLines.push "import {#{stub}DataStore} from '#{filename}';"
+
+	forEachFile(dir, addLine, /\.js$/)
+	barf tamlStoresPath, lLines.join("\n") + "\n"
 	return
 
 # ---------------------------------------------------------------------------
