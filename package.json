@@ -27,7 +27,7 @@
 	"dependencies": {
 		"@jdeighan/coffee-utils": "^4.0.8",
 		"@jdeighan/env": "^6.0.10",
-		"@jdeighan/starbucks": "^6.0.13",
+		"@jdeighan/starbucks": "^6.0.15",
 		"@jdeighan/string-input": "^7.0.9",
 		"chokidar": "^3.5.2",
 		"cross-env": "^7.0.3",

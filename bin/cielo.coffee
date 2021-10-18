@@ -16,7 +16,7 @@ import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
 import {loadPrivEnvFrom} from '@jdeighan/env'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
-import {brewCielo} from './brewCielo.js'
+import {brewCielo, brewCoffee} from './brewCielo.js'
 
 ###
 	cielo [-h | -n | -e | -d ]
@@ -55,11 +55,13 @@ main = () ->
 		if path.match(/node_modules/) || (event == 'unlink')
 			return
 
-		if lMatches = path.match(/\.(cielo|starbucks|taml)$/)
+		if lMatches = path.match(/\.(cielo|coffee|starbucks|taml)$/)
 			ext = lMatches[0]
 			log "#{event} #{fixPath(path)}"
 			if ext == '.cielo'
 				brewCieloFile(path)
+			else if ext == '.coffee'
+				brewCoffeeFile(path)
 			else if ext == '.starbucks'
 				brewStarbucksFile(path)
 			else if ext == '.taml'
@@ -91,7 +93,7 @@ brewTamlFile = (srcPath) ->
 	output("""
 		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
 		oz = new TAMLDataStore(`#{tamlCode}`);
-		""", srcPath, '.js')
+		""", srcPath, destPath)
 	return
 
 # ---------------------------------------------------------------------------
@@ -117,14 +119,27 @@ rebuildTamlStores = () ->
 # ---------------------------------------------------------------------------
 
 brewCieloFile = (srcPath) ->
+	# --- cielo => coffee
+
+	destPath = withExt(srcPath, '.coffee')
+	if newerDestFileExists(srcPath, destPath)
+		log "   dest exists"
+		return
+	coffeeCode = brewCielo(slurp(srcPath))
+	output coffeeCode, srcPath, destPath
+	return
+
+# ---------------------------------------------------------------------------
+
+brewCoffeeFile = (srcPath) ->
+	# --- coffee => js
 
 	destPath = withExt(srcPath, '.js')
 	if newerDestFileExists(srcPath, destPath)
 		log "   dest exists"
 		return
-	[coffeeCode, jsCode] = brewCielo(slurp(srcPath), 'both')
-	output coffeeCode, srcPath, '.coffee'
-	output jsCode, srcPath, '.js', true
+	jsCode = brewCoffee(slurp(srcPath))
+	output jsCode, srcPath, destPath
 	return
 
 # ---------------------------------------------------------------------------
@@ -141,18 +156,15 @@ brewStarbucksFile = (srcPath) ->
 		filename: hParsed.base,
 		}
 	code = starbucks(hOptions).code
-	output code, srcPath, '.svelte', true
+	output code, srcPath, destPath
 	return
 
 # ---------------------------------------------------------------------------
 
-output = (code, srcPath, outExt, expose=false) ->
+output = (code, srcPath, destPath) ->
 
-	destPath = withExt(srcPath, outExt)
-	if expose
-		destPath = destPath.replace('_', '')
 	barf destPath, code
-	log "   #{fixPath(srcPath)} => #{outExt}"
+	log "   #{fixPath(srcPath)} => #{fixPath(destPath)}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -195,6 +207,7 @@ parseCmdArgs = () ->
 # ---------------------------------------------------------------------------
 
 fixPath = (path) ->
+	# --- Replace user's home dir with '~'
 
 	str = mkpath(path)
 	if lMatches = str.match(///^

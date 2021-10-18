@@ -35,10 +35,9 @@ class CieloMapper extends SmartInput
 #        6. stop on __END__
 #        7. add auto-imports
 
-export brewCielo = (code, type) ->
+export brewCielo = (code) ->
+	# --- cielo => coffee
 
-	assert (type=='coffee') || (type=='js') || (type=='both'),
-		"brewCielo(): bad type"
 	debug "enter brewCielo()"
 	assert (indentLevel(code)==0), "brewCielo(): code has indentation"
 
@@ -53,17 +52,20 @@ export brewCielo = (code, type) ->
 		lImports = buildImportList(lNeeded)
 		coffeeCode = joinBlocks(lImports..., coffeeCode)
 
-	if type == 'coffee'
-		debug "return from brewCielo()", coffeeCode
-		return coffeeCode
+	debug "return from brewCielo()", coffeeCode
+	return coffeeCode
+
+# ---------------------------------------------------------------------------
+
+export brewCoffee = (code) ->
+	# --- coffee => js
+
+	debug "enter brewCoffee()"
+	assert (indentLevel(code)==0), "brewCoffee(): code has indentation"
 
 	try
-		jsCode = CoffeeScript.compile(coffeeCode, {bare: true})
-		debug "brewCielo(): js code", jsCode
+		jsCode = CoffeeScript.compile(code, {bare: true, header: false})
 	catch err
-		croak err, "Original Code", coffeeCode
-	debug "return from brewCielo()", jsCode
-	if type == 'js'
-		return jsCode
-	else if type == 'both'
-		return [coffeeCode, jsCode]
+		croak err, "Original Coffee Code", code
+	debug "return from brewCoffee()", jsCode
+	return jsCode

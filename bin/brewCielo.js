@@ -57,9 +57,9 @@ CieloMapper = class CieloMapper extends SmartInput {
 //        5. handle HEREDOC
 //        6. stop on __END__
 //        7. add auto-imports
-export var brewCielo = function(code, type) {
-  var coffeeCode, err, jsCode, lImports, lNeeded, oInput;
-  assert((type === 'coffee') || (type === 'js') || (type === 'both'), "brewCielo(): bad type");
+export var brewCielo = function(code) {
+  var coffeeCode, lImports, lNeeded, oInput;
+  // --- cielo => coffee
   debug("enter brewCielo()");
   assert(indentLevel(code) === 0, "brewCielo(): code has indentation");
   // --- CieloMapper handles the above conversions
@@ -71,23 +71,25 @@ export var brewCielo = function(code, type) {
     lImports = buildImportList(lNeeded);
     coffeeCode = joinBlocks(...lImports, coffeeCode);
   }
-  if (type === 'coffee') {
-    debug("return from brewCielo()", coffeeCode);
-    return coffeeCode;
-  }
+  debug("return from brewCielo()", coffeeCode);
+  return coffeeCode;
+};
+
+// ---------------------------------------------------------------------------
+export var brewCoffee = function(code) {
+  var err, jsCode;
+  // --- coffee => js
+  debug("enter brewCoffee()");
+  assert(indentLevel(code) === 0, "brewCoffee(): code has indentation");
   try {
-    jsCode = CoffeeScript.compile(coffeeCode, {
-      bare: true
+    jsCode = CoffeeScript.compile(code, {
+      bare: true,
+      header: false
     });
-    debug("brewCielo(): js code", jsCode);
   } catch (error) {
     err = error;
-    croak(err, "Original Code", coffeeCode);
+    croak(err, "Original Coffee Code", code);
   }
-  debug("return from brewCielo()", jsCode);
-  if (type === 'js') {
-    return jsCode;
-  } else if (type === 'both') {
-    return [coffeeCode, jsCode];
-  }
+  debug("return from brewCoffee()", jsCode);
+  return jsCode;
 };

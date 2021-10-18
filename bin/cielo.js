@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, readySeen, rebuildTamlStores;
+var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, readySeen, rebuildTamlStores;
 
 import {
   strict as assert
@@ -66,7 +66,8 @@ import {
 } from '@jdeighan/starbucks';
 
 import {
-  brewCielo
+  brewCielo,
+  brewCoffee
 } from './brewCielo.js';
 
 doWatch = true; // turn off with -n
@@ -104,11 +105,13 @@ main = function() {
     if (path.match(/node_modules/) || (event === 'unlink')) {
       return;
     }
-    if (lMatches = path.match(/\.(cielo|starbucks|taml)$/)) {
+    if (lMatches = path.match(/\.(cielo|coffee|starbucks|taml)$/)) {
       ext = lMatches[0];
       log(`${event} ${fixPath(path)}`);
       if (ext === '.cielo') {
         return brewCieloFile(path);
+      } else if (ext === '.coffee') {
+        return brewCoffeeFile(path);
       } else if (ext === '.starbucks') {
         return brewStarbucksFile(path);
       } else if (ext === '.taml') {
@@ -142,7 +145,7 @@ brewTamlFile = function(srcPath) {
   }
   tamlCode = slurp(srcPath);
   output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
-oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, '.js');
+oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
@@ -168,15 +171,28 @@ rebuildTamlStores = function() {
 
 // ---------------------------------------------------------------------------
 brewCieloFile = function(srcPath) {
-  var coffeeCode, destPath, jsCode;
+  var coffeeCode, destPath;
+  // --- cielo => coffee
+  destPath = withExt(srcPath, '.coffee');
+  if (newerDestFileExists(srcPath, destPath)) {
+    log("   dest exists");
+    return;
+  }
+  coffeeCode = brewCielo(slurp(srcPath));
+  output(coffeeCode, srcPath, destPath);
+};
+
+// ---------------------------------------------------------------------------
+brewCoffeeFile = function(srcPath) {
+  var destPath, jsCode;
+  // --- coffee => js
   destPath = withExt(srcPath, '.js');
   if (newerDestFileExists(srcPath, destPath)) {
     log("   dest exists");
     return;
   }
-  [coffeeCode, jsCode] = brewCielo(slurp(srcPath), 'both');
-  output(coffeeCode, srcPath, '.coffee');
-  output(jsCode, srcPath, '.js', true);
+  jsCode = brewCoffee(slurp(srcPath));
+  output(jsCode, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
@@ -193,18 +209,13 @@ brewStarbucksFile = function(srcPath) {
     filename: hParsed.base
   };
   code = starbucks(hOptions).code;
-  output(code, srcPath, '.svelte', true);
+  output(code, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
-output = function(code, srcPath, outExt, expose = false) {
-  var destPath;
-  destPath = withExt(srcPath, outExt);
-  if (expose) {
-    destPath = destPath.replace('_', '');
-  }
+output = function(code, srcPath, destPath) {
   barf(destPath, code);
-  log(`   ${fixPath(srcPath)} => ${outExt}`);
+  log(`   ${fixPath(srcPath)} => ${fixPath(destPath)}`);
 };
 
 // ---------------------------------------------------------------------------
@@ -248,6 +259,7 @@ parseCmdArgs = function() {
 // ---------------------------------------------------------------------------
 fixPath = function(path) {
   var _, lMatches, str, tail;
+  // --- Replace user's home dir with '~'
   str = mkpath(path);
   if (lMatches = str.match(/^c:\/Users\/[a-z_][a-z0-9_]*\/(.*)$/i)) {
     [_, tail] = lMatches;
