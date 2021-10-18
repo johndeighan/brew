@@ -83,9 +83,7 @@ brewTamlFile = (srcPath) ->
 	tamlCode = slurp(srcPath)
 	output("""
 		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
-		oz = new TAMLDataStore(`
-			#{tamlCode}
-			`);
+		oz = new TAMLDataStore(`#{tamlCode}`);
 		""", srcPath, '.js')
 	return
 

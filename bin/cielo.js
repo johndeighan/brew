@@ -130,9 +130,7 @@ brewTamlFile = function(srcPath) {
   }
   tamlCode = slurp(srcPath);
   output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
-oz = new TAMLDataStore(\`
-	${tamlCode}
-	\`);`, srcPath, '.js');
+oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, '.js');
 };
 
 // ---------------------------------------------------------------------------
