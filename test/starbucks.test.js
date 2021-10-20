@@ -1,9 +1,7 @@
 // brew.test.coffee
 var CieloTester, StarbucksTester, starbucksTester;
 
-import {
-  strict as assert
-} from 'assert';
+import assert from 'assert';
 
 import {
   slurp,

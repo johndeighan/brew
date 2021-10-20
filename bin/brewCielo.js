@@ -1,9 +1,7 @@
 // brewCielo.coffee
 var CieloMapper;
 
-import {
-  strict as assert
-} from 'assert';
+import assert from 'assert';
 
 import CoffeeScript from 'coffeescript';
 

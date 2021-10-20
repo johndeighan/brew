@@ -1,9 +1,9 @@
 `#!/usr/bin/env node
 `
-import {strict as assert} from 'assert'
+import assert from 'assert'
 import parseArgs from 'minimist'
-import {parse as parsePath} from 'path'
-import {existsSync, statSync, unlinkSync} from 'fs'
+import pathlib from 'path'
+import fs from 'fs'
 import chokidar from 'chokidar'         # file watcher
 
 import {undef, croak, words} from '@jdeighan/coffee-utils'
@@ -108,7 +108,7 @@ removeFile = (path, ext) ->
 
 	fullpath = withExt(path, ext)
 	try
-		unlinkSync fullpath
+		fs.unlinkSync fullpath
 		log "   unlink #{filename}"
 	return
 
@@ -146,7 +146,7 @@ brewStarbucksFile = (srcPath) ->
 	if newerDestFileExists(srcPath, destPath)
 		log "   dest exists"
 		return
-	hParsed = parsePath(srcPath)
+	hParsed = pathlib.parse(srcPath)
 	hOptions = {
 		content: slurp(srcPath),
 		filename: hParsed.base,
@@ -163,7 +163,7 @@ brewTamlFile = (srcPath) ->
 	if newerDestFileExists(srcPath, destPath)
 		log "   dest exists"
 		return
-	hParsed = parsePath(srcPath)
+	hParsed = pathlib.parse(srcPath)
 	srcDir = mkpath(hParsed.dir)
 	envDir = hPrivEnv.DIR_STORES
 	assert envDir, "DIR_STORES is not set!"
@@ -171,7 +171,7 @@ brewTamlFile = (srcPath) ->
 		log "   #{srcDir} is not #{envDir}"
 		return
 
-	hInfo = parsePath(destPath)
+	hInfo = pathlib.parse(destPath)
 	stub = hInfo.name
 
 	tamlCode = slurp(srcPath)

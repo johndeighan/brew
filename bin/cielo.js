@@ -5,21 +5,13 @@
 */
 var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
-import {
-  strict as assert
-} from 'assert';
+import assert from 'assert';
 
 import parseArgs from 'minimist';
 
-import {
-  parse as parsePath
-} from 'path';
+import pathlib from 'path';
 
-import {
-  existsSync,
-  statSync,
-  unlinkSync
-} from 'fs';
+import fs from 'fs';
 
 import chokidar from 'chokidar';
 
@@ -168,7 +160,7 @@ removeFile = function(path, ext) {
   //     remove same file, but with ext 'ext'
   fullpath = withExt(path, ext);
   try {
-    unlinkSync(fullpath);
+    fs.unlinkSync(fullpath);
     log(`   unlink ${filename}`);
   } catch (error) {}
 };
@@ -207,7 +199,7 @@ brewStarbucksFile = function(srcPath) {
     log("   dest exists");
     return;
   }
-  hParsed = parsePath(srcPath);
+  hParsed = pathlib.parse(srcPath);
   hOptions = {
     content: slurp(srcPath),
     filename: hParsed.base
@@ -224,7 +216,7 @@ brewTamlFile = function(srcPath) {
     log("   dest exists");
     return;
   }
-  hParsed = parsePath(srcPath);
+  hParsed = pathlib.parse(srcPath);
   srcDir = mkpath(hParsed.dir);
   envDir = hPrivEnv.DIR_STORES;
   assert(envDir, "DIR_STORES is not set!");
@@ -232,7 +224,7 @@ brewTamlFile = function(srcPath) {
     log(`   ${srcDir} is not ${envDir}`);
     return;
   }
-  hInfo = parsePath(destPath);
+  hInfo = pathlib.parse(destPath);
   stub = hInfo.name;
   tamlCode = slurp(srcPath);
   output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores';

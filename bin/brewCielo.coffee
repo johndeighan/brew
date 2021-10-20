@@ -1,6 +1,6 @@
 # brewCielo.coffee
 
-import {strict as assert} from 'assert'
+import assert from 'assert'
 import CoffeeScript from 'coffeescript'
 
 import {isEmpty, croak} from '@jdeighan/coffee-utils'
