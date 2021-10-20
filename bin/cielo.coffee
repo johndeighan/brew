@@ -50,9 +50,13 @@ main = () ->
 
 		if event == 'ready'
 			readySeen = true
+			if doWatch
+				log "...watching for further file changes"
+			else
+				log "...not watching for further file changes"
 			return
 
-		if path.match(/node_modules/) || (event == 'unlink')
+		if path.match(/node_modules/)
 			return
 
 		if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
@@ -74,8 +78,6 @@ main = () ->
 						croak "Invalid file extension: '#{ext}'"
 		return
 
-	if ! doWatch
-		log "...not watching for further file changes"
 	return
 
 # ---------------------------------------------------------------------------
