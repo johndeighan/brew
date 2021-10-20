@@ -136,7 +136,7 @@ brewCieloFile = (srcPath) ->
 brewCoffeeFile = (srcPath) ->
 	# --- coffee => js
 
-	destPath = withExt(srcPath, '.js')
+	destPath = withExt(srcPath, '.js').replace('_', '')
 	if newerDestFileExists(srcPath, destPath)
 		log "   dest exists"
 		return

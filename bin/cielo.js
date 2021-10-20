@@ -188,7 +188,7 @@ brewCieloFile = function(srcPath) {
 brewCoffeeFile = function(srcPath) {
   var destPath, jsCode;
   // --- coffee => js
-  destPath = withExt(srcPath, '.js');
+  destPath = withExt(srcPath, '.js').replace('_', '');
   if (newerDestFileExists(srcPath, destPath)) {
     log("   dest exists");
     return;
