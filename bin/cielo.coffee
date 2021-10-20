@@ -179,7 +179,7 @@ brewTamlFile = (srcPath) ->
 	output("""
 		import {TAMLDataStore} from '@jdeighan/starbucks/stores';
 
-		export #{stub} = new TAMLDataStore(`#{tamlCode}`);
+		export let #{stub} = new TAMLDataStore(`#{tamlCode}`);
 		""", srcPath, destPath)
 	return
 

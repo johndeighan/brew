@@ -239,7 +239,7 @@ brewTamlFile = function(srcPath) {
   tamlCode = slurp(srcPath);
   output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores';
 
-export ${stub} = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
+export let ${stub} = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
