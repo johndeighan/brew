@@ -35,12 +35,12 @@ main = () ->
 	parseCmdArgs()
 	if ! dirRoot?
 		dirRoot = process.cwd()
-	log "ROOT: #{dirRoot}"
+	log "DIR_ROOT: #{dirRoot}"
+	process.env.DIR_ROOT = dirRoot
 
 	loadPrivEnvFrom(dirRoot)
+	logPrivEnv()
 	if envOnly
-		log "DIR_ROOT = '#{dirRoot}'"
-		logPrivEnv()
 		process.exit()
 
 	watcher = chokidar.watch(dirRoot, {
@@ -168,8 +168,10 @@ brewTamlFile = (srcPath) ->
 		return
 	hParsed = parsePath(srcPath)
 	srcDir = mkpath(hParsed.dir)
-	if (srcDir != hPrivEnv.DIR_STORES)
-		log "   #{srcDir} is not #{hPrivEnv.DIR_STORES}"
+	envDir = hPrivEnv.DIR_STORES
+	assert envDir, "DIR_STORES is not set!"
+	if (srcDir != envDir)
+		log "   #{srcDir} is not #{envDir}"
 		return
 
 	hInfo = parsePath(destPath)

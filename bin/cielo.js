@@ -87,11 +87,11 @@ main = function() {
   if (dirRoot == null) {
     dirRoot = process.cwd();
   }
-  log(`ROOT: ${dirRoot}`);
+  log(`DIR_ROOT: ${dirRoot}`);
+  process.env.DIR_ROOT = dirRoot;
   loadPrivEnvFrom(dirRoot);
+  logPrivEnv();
   if (envOnly) {
-    log(`DIR_ROOT = '${dirRoot}'`);
-    logPrivEnv();
     process.exit();
   }
   watcher = chokidar.watch(dirRoot, {
@@ -222,7 +222,7 @@ brewStarbucksFile = function(srcPath) {
 
 // ---------------------------------------------------------------------------
 brewTamlFile = function(srcPath) {
-  var destPath, hInfo, hParsed, srcDir, stub, tamlCode;
+  var destPath, envDir, hInfo, hParsed, srcDir, stub, tamlCode;
   destPath = withExt(srcPath, '.js').replace('_', '');
   if (newerDestFileExists(srcPath, destPath)) {
     log("   dest exists");
@@ -230,8 +230,10 @@ brewTamlFile = function(srcPath) {
   }
   hParsed = parsePath(srcPath);
   srcDir = mkpath(hParsed.dir);
-  if (srcDir !== hPrivEnv.DIR_STORES) {
-    log(`   ${srcDir} is not ${hPrivEnv.DIR_STORES}`);
+  envDir = hPrivEnv.DIR_STORES;
+  assert(envDir, "DIR_STORES is not set!");
+  if (srcDir !== envDir) {
+    log(`   ${srcDir} is not ${envDir}`);
     return;
   }
   hInfo = parsePath(destPath);
