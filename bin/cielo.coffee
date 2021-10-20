@@ -49,28 +49,30 @@ main = () ->
 	watcher.on 'all', (event, path) ->
 
 		if event == 'ready'
-			rebuildTamlStores()
 			readySeen = true
 			return
 
 		if path.match(/node_modules/) || (event == 'unlink')
 			return
 
-		if lMatches = path.match(/\.(cielo|coffee|starbucks|taml)$/)
-			ext = lMatches[0]
+		if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
 			log "#{event} #{fixPath(path)}"
-			if ext == '.cielo'
-				brewCieloFile(path)
-			else if ext == '.coffee'
-				brewCoffeeFile(path)
-			else if ext == '.starbucks'
-				brewStarbucksFile(path)
-			else if ext == '.taml'
-				brewTamlFile(path)
-				if readySeen
-					rebuildTamlStores()
+			ext = lMatches[0]
+			if event == 'unlink'
+				unlinkRelatedFiles(path, ext)
 			else
-				croak "Invalid file extension: '#{ext}'"
+				switch ext
+					when '.cielo'
+						brewCieloFile(path)
+					when '.coffee'
+						brewCoffeeFile(path)
+					when '.starbucks'
+						brewStarbucksFile(path)
+					when '.taml'
+						brewTamlFile(path)
+					else
+						croak "Invalid file extension: '#{ext}'"
+		return
 
 	if ! doWatch
 		log "...not watching for further file changes"
@@ -78,44 +80,28 @@ main = () ->
 
 # ---------------------------------------------------------------------------
 
-brewTamlFile = (srcPath) ->
+unlinkRelatedFiles = (path, ext) ->
 
-	destPath = withExt(srcPath, '.js')
-	if newerDestFileExists(srcPath, destPath)
-		log "   dest exists"
-		return
-	hParsed = parsePath(srcPath)
-	srcDir = mkpath(hParsed.dir)
-	if (srcDir != hPrivEnv.DIR_STORES)
-		log "   #{srcDir} is not #{hPrivEnv.DIR_STORES}"
-		return
-
-	tamlCode = slurp(srcPath)
-	output("""
-		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
-		.
-		export oz = new TAMLDataStore(`#{tamlCode}`);
-		""", srcPath, destPath)
+	switch ext
+		when '.cielo'
+			removeFile(path, '.coffee')
+		when '.coffee'
+			removeFile(path, '.js')
+		when '.starbucks'
+			removeFile(path, '.svelte')
+		when '.taml'
+			removeFile(path, '.js')
+		else
+			croak "Invalid file extension: '#{ext}'"
 	return
 
 # ---------------------------------------------------------------------------
 
-rebuildTamlStores = () ->
+removeFile = (path, ext) ->
 
-	dir = hPrivEnv.DIR_STORES
-	tamlStoresPath = mkpath(dir, 'tamlStores.js')
-	if existsSync(tamlStoresPath)
-		unlinkSync tamlStoresPath
-
-	lLines = []
-	addLine = (filename, dir, level) ->
-		if filename == 'tamlStores.js'
-			return
-		stub = filename.substr(0, filename.length - 3)
-		lLines.push "import {#{stub}DataStore} from '#{filename}';"
-
-	forEachFile(dir, addLine, /\.js$/)
-	barf tamlStoresPath, lLines.join("\n") + "\n"
+	filename = withExt(path, ext)
+	log "   unlink #{filename}"
+	unlinkSync filename
 	return
 
 # ---------------------------------------------------------------------------
@@ -159,6 +145,28 @@ brewStarbucksFile = (srcPath) ->
 		}
 	code = starbucks(hOptions).code
 	output code, srcPath, destPath
+	return
+
+# ---------------------------------------------------------------------------
+
+brewTamlFile = (srcPath) ->
+
+	destPath = withExt(srcPath, '.js')
+	if newerDestFileExists(srcPath, destPath)
+		log "   dest exists"
+		return
+	hParsed = parsePath(srcPath)
+	srcDir = mkpath(hParsed.dir)
+	if (srcDir != hPrivEnv.DIR_STORES)
+		log "   #{srcDir} is not #{hPrivEnv.DIR_STORES}"
+		return
+
+	tamlCode = slurp(srcPath)
+	output("""
+		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
+
+		export oz = new TAMLDataStore(`#{tamlCode}`);
+		""", srcPath, destPath)
 	return
 
 # ---------------------------------------------------------------------------

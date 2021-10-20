@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, readySeen, rebuildTamlStores;
+var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
 import {
   strict as assert
@@ -99,29 +99,34 @@ main = function() {
   watcher.on('all', function(event, path) {
     var ext, lMatches;
     if (event === 'ready') {
-      rebuildTamlStores();
       readySeen = true;
       return;
     }
     if (path.match(/node_modules/) || (event === 'unlink')) {
       return;
     }
-    if (lMatches = path.match(/\.(cielo|coffee|starbucks|taml)$/)) {
-      ext = lMatches[0];
+    if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
       log(`${event} ${fixPath(path)}`);
-      if (ext === '.cielo') {
-        return brewCieloFile(path);
-      } else if (ext === '.coffee') {
-        return brewCoffeeFile(path);
-      } else if (ext === '.starbucks') {
-        return brewStarbucksFile(path);
-      } else if (ext === '.taml') {
-        brewTamlFile(path);
-        if (readySeen) {
-          return rebuildTamlStores();
-        }
+      ext = lMatches[0];
+      if (event === 'unlink') {
+        unlinkRelatedFiles(path, ext);
       } else {
-        return croak(`Invalid file extension: '${ext}'`);
+        switch (ext) {
+          case '.cielo':
+            brewCieloFile(path);
+            break;
+          case '.coffee':
+            brewCoffeeFile(path);
+            break;
+          case '.starbucks':
+            brewStarbucksFile(path);
+            break;
+          case '.taml':
+            brewTamlFile(path);
+            break;
+          default:
+            croak(`Invalid file extension: '${ext}'`);
+        }
       }
     }
   });
@@ -131,44 +136,31 @@ main = function() {
 };
 
 // ---------------------------------------------------------------------------
-brewTamlFile = function(srcPath) {
-  var destPath, hParsed, srcDir, tamlCode;
-  destPath = withExt(srcPath, '.js');
-  if (newerDestFileExists(srcPath, destPath)) {
-    log("   dest exists");
-    return;
+unlinkRelatedFiles = function(path, ext) {
+  switch (ext) {
+    case '.cielo':
+      removeFile(path, '.coffee');
+      break;
+    case '.coffee':
+      removeFile(path, '.js');
+      break;
+    case '.starbucks':
+      removeFile(path, '.svelte');
+      break;
+    case '.taml':
+      removeFile(path, '.js');
+      break;
+    default:
+      croak(`Invalid file extension: '${ext}'`);
   }
-  hParsed = parsePath(srcPath);
-  srcDir = mkpath(hParsed.dir);
-  if (srcDir !== hPrivEnv.DIR_STORES) {
-    log(`   ${srcDir} is not ${hPrivEnv.DIR_STORES}`);
-    return;
-  }
-  tamlCode = slurp(srcPath);
-  output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
-.
-export oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
-rebuildTamlStores = function() {
-  var addLine, dir, lLines, tamlStoresPath;
-  dir = hPrivEnv.DIR_STORES;
-  tamlStoresPath = mkpath(dir, 'tamlStores.js');
-  if (existsSync(tamlStoresPath)) {
-    unlinkSync(tamlStoresPath);
-  }
-  lLines = [];
-  addLine = function(filename, dir, level) {
-    var stub;
-    if (filename === 'tamlStores.js') {
-      return;
-    }
-    stub = filename.substr(0, filename.length - 3);
-    return lLines.push(`import {${stub}DataStore} from '${filename}';`);
-  };
-  forEachFile(dir, addLine, /\.js$/);
-  barf(tamlStoresPath, lLines.join("\n") + "\n");
+removeFile = function(path, ext) {
+  var filename;
+  filename = withExt(path, ext);
+  log(`   unlink ${filename}`);
+  unlinkSync(filename);
 };
 
 // ---------------------------------------------------------------------------
@@ -212,6 +204,26 @@ brewStarbucksFile = function(srcPath) {
   };
   code = starbucks(hOptions).code;
   output(code, srcPath, destPath);
+};
+
+// ---------------------------------------------------------------------------
+brewTamlFile = function(srcPath) {
+  var destPath, hParsed, srcDir, tamlCode;
+  destPath = withExt(srcPath, '.js');
+  if (newerDestFileExists(srcPath, destPath)) {
+    log("   dest exists");
+    return;
+  }
+  hParsed = parsePath(srcPath);
+  srcDir = mkpath(hParsed.dir);
+  if (srcDir !== hPrivEnv.DIR_STORES) {
+    log(`   ${srcDir} is not ${hPrivEnv.DIR_STORES}`);
+    return;
+  }
+  tamlCode = slurp(srcPath);
+  output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
+
+export oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
