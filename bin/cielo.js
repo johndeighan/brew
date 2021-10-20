@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, fixPath, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
 import {
   strict as assert
@@ -39,7 +39,8 @@ import {
   withExt,
   mkpath,
   forEachFile,
-  newerDestFileExists
+  newerDestFileExists,
+  shortenPath
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -111,7 +112,7 @@ main = function() {
       return;
     }
     if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
-      log(`${event} ${fixPath(path)}`);
+      log(`${event} ${shortenPath(path)}`);
       ext = lMatches[0];
       if (event === 'unlink') {
         unlinkRelatedFiles(path, ext);
@@ -221,7 +222,7 @@ brewStarbucksFile = function(srcPath) {
 
 // ---------------------------------------------------------------------------
 brewTamlFile = function(srcPath) {
-  var destPath, hParsed, srcDir, tamlCode;
+  var destPath, hInfo, hParsed, srcDir, stub, tamlCode;
   destPath = withExt(srcPath, '.js').replace('_', '');
   if (newerDestFileExists(srcPath, destPath)) {
     log("   dest exists");
@@ -233,16 +234,18 @@ brewTamlFile = function(srcPath) {
     log(`   ${srcDir} is not ${hPrivEnv.DIR_STORES}`);
     return;
   }
+  hInfo = parsePath(destPath);
+  stub = hInfo.name;
   tamlCode = slurp(srcPath);
-  output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores'
+  output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores';
 
-export oz = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
+export ${stub} = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
 output = function(code, srcPath, destPath) {
   barf(destPath, code);
-  log(`   ${fixPath(srcPath)} => ${fixPath(destPath)}`);
+  log(`   ${shortenPath(srcPath)} => ${shortenPath(destPath)}`);
 };
 
 // ---------------------------------------------------------------------------
@@ -280,19 +283,6 @@ parseCmdArgs = function() {
     } else if (hArgs._.length > 1) {
       croak("Only one directory path allowed");
     }
-  }
-};
-
-// ---------------------------------------------------------------------------
-fixPath = function(path) {
-  var _, lMatches, str, tail;
-  // --- Replace user's home dir with '~'
-  str = mkpath(path);
-  if (lMatches = str.match(/^c:\/Users\/[a-z_][a-z0-9_]*\/(.*)$/i)) {
-    [_, tail] = lMatches;
-    return `~/${tail}`;
-  } else {
-    return str;
   }
 };
 

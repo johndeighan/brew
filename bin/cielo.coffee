@@ -10,6 +10,7 @@ import {undef, croak, words} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
 	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
+	shortenPath,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
@@ -60,7 +61,7 @@ main = () ->
 			return
 
 		if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
-			log "#{event} #{fixPath(path)}"
+			log "#{event} #{shortenPath(path)}"
 			ext = lMatches[0]
 			if event == 'unlink'
 				unlinkRelatedFiles(path, ext)
@@ -171,11 +172,14 @@ brewTamlFile = (srcPath) ->
 		log "   #{srcDir} is not #{hPrivEnv.DIR_STORES}"
 		return
 
+	hInfo = parsePath(destPath)
+	stub = hInfo.name
+
 	tamlCode = slurp(srcPath)
 	output("""
-		import {TAMLDataStore} from '@jdeighan/starbucks/stores'
+		import {TAMLDataStore} from '@jdeighan/starbucks/stores';
 
-		export oz = new TAMLDataStore(`#{tamlCode}`);
+		export #{stub} = new TAMLDataStore(`#{tamlCode}`);
 		""", srcPath, destPath)
 	return
 
@@ -184,7 +188,7 @@ brewTamlFile = (srcPath) ->
 output = (code, srcPath, destPath) ->
 
 	barf destPath, code
-	log "   #{fixPath(srcPath)} => #{fixPath(destPath)}"
+	log "   #{shortenPath(srcPath)} => #{shortenPath(destPath)}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -223,20 +227,6 @@ parseCmdArgs = () ->
 		else if hArgs._.length > 1
 			croak "Only one directory path allowed"
 	return
-
-# ---------------------------------------------------------------------------
-
-fixPath = (path) ->
-	# --- Replace user's home dir with '~'
-
-	str = mkpath(path)
-	if lMatches = str.match(///^
-			c:/Users/[a-z_][a-z0-9_]*/(.*)
-			$///i)
-		[_, tail] = lMatches
-		return "~/#{tail}"
-	else
-		return str
 
 # ---------------------------------------------------------------------------
 
