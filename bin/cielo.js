@@ -137,18 +137,25 @@ main = function() {
 
 // ---------------------------------------------------------------------------
 unlinkRelatedFiles = function(path, ext) {
+  // --- file 'path' was removed
   switch (ext) {
     case '.cielo':
       removeFile(path, '.coffee');
       break;
     case '.coffee':
-      removeFile(path, '.js');
+    case '.taml':
+      if (path.indexOf('_') === -1) {
+        removeFile(path, '.js');
+      } else {
+        removeFile(path.replace('_', ''), '.js');
+      }
       break;
     case '.starbucks':
-      removeFile(path, '.svelte');
-      break;
-    case '.taml':
-      removeFile(path, '.js');
+      if (path.indexOf('_') === -1) {
+        removeFile(path, '.svelte');
+      } else {
+        removeFile(path.replace('_', ''), '.svelte');
+      }
       break;
     default:
       croak(`Invalid file extension: '${ext}'`);
@@ -157,10 +164,14 @@ unlinkRelatedFiles = function(path, ext) {
 
 // ---------------------------------------------------------------------------
 removeFile = function(path, ext) {
-  var filename;
-  filename = withExt(path, ext);
-  log(`   unlink ${filename}`);
-  unlinkSync(filename);
+  var fullpath;
+  // --- file 'path' was removed
+  //     remove same file, but with ext 'ext'
+  fullpath = withExt(path, ext);
+  try {
+    unlinkSync(fullpath);
+    log(`   unlink ${filename}`);
+  } catch (error) {}
 };
 
 // ---------------------------------------------------------------------------
@@ -209,7 +220,7 @@ brewStarbucksFile = function(srcPath) {
 // ---------------------------------------------------------------------------
 brewTamlFile = function(srcPath) {
   var destPath, hParsed, srcDir, tamlCode;
-  destPath = withExt(srcPath, '.js');
+  destPath = withExt(srcPath, '.js').replace('_', '');
   if (newerDestFileExists(srcPath, destPath)) {
     log("   dest exists");
     return;

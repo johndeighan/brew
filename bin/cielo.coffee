@@ -81,16 +81,21 @@ main = () ->
 # ---------------------------------------------------------------------------
 
 unlinkRelatedFiles = (path, ext) ->
+	# --- file 'path' was removed
 
 	switch ext
 		when '.cielo'
 			removeFile(path, '.coffee')
-		when '.coffee'
-			removeFile(path, '.js')
+		when '.coffee', '.taml'
+			if path.indexOf('_') == -1
+				removeFile(path, '.js')
+			else
+				removeFile(path.replace('_',''), '.js')
 		when '.starbucks'
-			removeFile(path, '.svelte')
-		when '.taml'
-			removeFile(path, '.js')
+			if path.indexOf('_') == -1
+				removeFile(path, '.svelte')
+			else
+				removeFile(path.replace('_',''), '.svelte')
 		else
 			croak "Invalid file extension: '#{ext}'"
 	return
@@ -98,10 +103,13 @@ unlinkRelatedFiles = (path, ext) ->
 # ---------------------------------------------------------------------------
 
 removeFile = (path, ext) ->
+	# --- file 'path' was removed
+	#     remove same file, but with ext 'ext'
 
-	filename = withExt(path, ext)
-	log "   unlink #{filename}"
-	unlinkSync filename
+	fullpath = withExt(path, ext)
+	try
+		unlinkSync fullpath
+		log "   unlink #{filename}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -151,7 +159,7 @@ brewStarbucksFile = (srcPath) ->
 
 brewTamlFile = (srcPath) ->
 
-	destPath = withExt(srcPath, '.js')
+	destPath = withExt(srcPath, '.js').replace('_', '')
 	if newerDestFileExists(srcPath, destPath)
 		log "   dest exists"
 		return
