@@ -23,9 +23,9 @@ import {brewCielo, brewCoffee} from './brewCielo.js'
 	cielo [-h | -n | -e | -d ]
 ###
 
+dirRoot = undef
 doWatch = true      # turn off with -n
 envOnly = false     # set with -e
-dirRoot = undef
 readySeen = false   # set true when 'ready' event is seen
 
 # ---------------------------------------------------------------------------
@@ -33,10 +33,7 @@ readySeen = false   # set true when 'ready' event is seen
 main = () ->
 
 	parseCmdArgs()
-	if ! dirRoot?
-		dirRoot = process.cwd()
 	log "DIR_ROOT: #{dirRoot}"
-	process.env.DIR_ROOT = dirRoot
 
 	loadPrivEnvFrom(dirRoot)
 	logPrivEnv()
@@ -224,10 +221,14 @@ parseCmdArgs = () ->
 		setDebugging true
 
 	if hArgs._?
+		if hArgs._.length > 1
+			croak "Only one directory path allowed"
 		if hArgs._.length == 1
 			dirRoot = hArgs._[0]
-		else if hArgs._.length > 1
-			croak "Only one directory path allowed"
+		else if process.env.DIR_ROOT
+			dirRoot = process.env.DIR_ROOT
+		else
+			dirRoot = process.env.DIR_ROOT = process.cwd()
 	return
 
 # ---------------------------------------------------------------------------

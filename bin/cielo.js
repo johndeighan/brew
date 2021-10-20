@@ -71,11 +71,11 @@ import {
   brewCoffee
 } from './brewCielo.js';
 
+dirRoot = undef;
+
 doWatch = true; // turn off with -n
 
 envOnly = false; // set with -e
-
-dirRoot = undef;
 
 readySeen = false; // set true when 'ready' event is seen
 
@@ -84,11 +84,7 @@ readySeen = false; // set true when 'ready' event is seen
 main = function() {
   var watcher;
   parseCmdArgs();
-  if (dirRoot == null) {
-    dirRoot = process.cwd();
-  }
   log(`DIR_ROOT: ${dirRoot}`);
-  process.env.DIR_ROOT = dirRoot;
   loadPrivEnvFrom(dirRoot);
   logPrivEnv();
   if (envOnly) {
@@ -280,10 +276,15 @@ parseCmdArgs = function() {
     setDebugging(true);
   }
   if (hArgs._ != null) {
+    if (hArgs._.length > 1) {
+      croak("Only one directory path allowed");
+    }
     if (hArgs._.length === 1) {
       dirRoot = hArgs._[0];
-    } else if (hArgs._.length > 1) {
-      croak("Only one directory path allowed");
+    } else if (process.env.DIR_ROOT) {
+      dirRoot = process.env.DIR_ROOT;
+    } else {
+      dirRoot = process.env.DIR_ROOT = process.cwd();
     }
   }
 };
