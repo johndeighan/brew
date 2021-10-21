@@ -1,11 +1,10 @@
 // brewCielo.coffee
 var CieloMapper;
 
-import assert from 'assert';
-
 import CoffeeScript from 'coffeescript';
 
 import {
+  assert,
   isEmpty,
   croak
 } from '@jdeighan/coffee-utils';

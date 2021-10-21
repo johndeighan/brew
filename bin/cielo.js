@@ -5,8 +5,6 @@
 */
 var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
-import assert from 'assert';
-
 import parseArgs from 'minimist';
 
 import pathlib from 'path';
@@ -16,6 +14,7 @@ import fs from 'fs';
 import chokidar from 'chokidar';
 
 import {
+  assert,
   undef,
   croak,
   words

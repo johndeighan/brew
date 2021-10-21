@@ -1,12 +1,11 @@
 `#!/usr/bin/env node
 `
-import assert from 'assert'
 import parseArgs from 'minimist'
 import pathlib from 'path'
 import fs from 'fs'
 import chokidar from 'chokidar'         # file watcher
 
-import {undef, croak, words} from '@jdeighan/coffee-utils'
+import {assert, undef, croak, words} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
 	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,

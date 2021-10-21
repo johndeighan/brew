@@ -1,9 +1,8 @@
 # brewCielo.coffee
 
-import assert from 'assert'
 import CoffeeScript from 'coffeescript'
 
-import {isEmpty, croak} from '@jdeighan/coffee-utils'
+import {assert, isEmpty, croak} from '@jdeighan/coffee-utils'
 import {indentLevel} from '@jdeighan/coffee-utils/indent'
 import {joinBlocks} from '@jdeighan/coffee-utils/block'
 import {debug} from '@jdeighan/coffee-utils/debug'
@@ -48,7 +47,7 @@ export brewCielo = (code) ->
 	# --- returns [<symbol>, ... ]
 	lNeeded = getNeededSymbols(coffeeCode)
 
-	if not isEmpty(lNeeded)
+	if ! isEmpty(lNeeded)
 		lImports = buildImportList(lNeeded)
 		coffeeCode = joinBlocks(lImports..., coffeeCode)
 
