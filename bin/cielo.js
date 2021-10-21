@@ -169,7 +169,7 @@ brewCieloFile = function(srcPath) {
   var coffeeCode, destPath;
   // --- cielo => coffee
   destPath = withExt(srcPath, '.coffee');
-  if (newerDestFileExists(srcPath, destPath)) {
+  if (newerDestFileExists(srcPath, destPath) && readySeen) {
     log("   dest exists");
     return;
   }
@@ -182,7 +182,7 @@ brewCoffeeFile = function(srcPath) {
   var destPath, jsCode;
   // --- coffee => js
   destPath = withExt(srcPath, '.js').replace('_', '');
-  if (newerDestFileExists(srcPath, destPath)) {
+  if (newerDestFileExists(srcPath, destPath) && readySeen) {
     log("   dest exists");
     return;
   }
@@ -194,7 +194,7 @@ brewCoffeeFile = function(srcPath) {
 brewStarbucksFile = function(srcPath) {
   var code, destPath, hOptions, hParsed;
   destPath = withExt(srcPath, '.svelte').replace('_', '');
-  if (newerDestFileExists(srcPath, destPath)) {
+  if (newerDestFileExists(srcPath, destPath) && readySeen) {
     log("   dest exists");
     return;
   }
@@ -211,7 +211,7 @@ brewStarbucksFile = function(srcPath) {
 brewTamlFile = function(srcPath) {
   var destPath, envDir, hInfo, hParsed, srcDir, stub, tamlCode;
   destPath = withExt(srcPath, '.js').replace('_', '');
-  if (newerDestFileExists(srcPath, destPath)) {
+  if (newerDestFileExists(srcPath, destPath) && readySeen) {
     log("   dest exists");
     return;
   }

@@ -117,7 +117,7 @@ brewCieloFile = (srcPath) ->
 	# --- cielo => coffee
 
 	destPath = withExt(srcPath, '.coffee')
-	if newerDestFileExists(srcPath, destPath)
+	if newerDestFileExists(srcPath, destPath) && readySeen
 		log "   dest exists"
 		return
 	coffeeCode = brewCielo(slurp(srcPath))
@@ -130,7 +130,7 @@ brewCoffeeFile = (srcPath) ->
 	# --- coffee => js
 
 	destPath = withExt(srcPath, '.js').replace('_', '')
-	if newerDestFileExists(srcPath, destPath)
+	if newerDestFileExists(srcPath, destPath) && readySeen
 		log "   dest exists"
 		return
 	jsCode = brewCoffee(slurp(srcPath))
@@ -142,7 +142,7 @@ brewCoffeeFile = (srcPath) ->
 brewStarbucksFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.svelte').replace('_', '')
-	if newerDestFileExists(srcPath, destPath)
+	if newerDestFileExists(srcPath, destPath) && readySeen
 		log "   dest exists"
 		return
 	hParsed = pathlib.parse(srcPath)
@@ -159,7 +159,7 @@ brewStarbucksFile = (srcPath) ->
 brewTamlFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.js').replace('_', '')
-	if newerDestFileExists(srcPath, destPath)
+	if newerDestFileExists(srcPath, destPath) && readySeen
 		log "   dest exists"
 		return
 	hParsed = pathlib.parse(srcPath)
