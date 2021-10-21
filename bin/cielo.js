@@ -271,11 +271,11 @@ parseCmdArgs = function() {
       croak("Only one directory path allowed");
     }
     if (hArgs._.length === 1) {
-      dirRoot = hArgs._[0];
+      dirRoot = mkpath(hArgs._[0]);
     } else if (process.env.DIR_ROOT) {
-      dirRoot = process.env.DIR_ROOT;
+      dirRoot = mkpath(process.env.DIR_ROOT);
     } else {
-      dirRoot = process.env.DIR_ROOT = process.cwd();
+      dirRoot = process.env.DIR_ROOT = mkpath(process.cwd());
     }
   }
 };
