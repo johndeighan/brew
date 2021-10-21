@@ -5,7 +5,7 @@ import pathlib from 'path'
 import fs from 'fs'
 import chokidar from 'chokidar'         # file watcher
 
-import {assert, undef, croak, words} from '@jdeighan/coffee-utils'
+import {assert, undef, croak, words, sep_eq} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
 	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
@@ -23,9 +23,10 @@ import {brewCielo, brewCoffee} from './brewCielo.js'
 ###
 
 dirRoot = undef
-doWatch = true      # turn off with -n
-envOnly = false     # set with -e
-readySeen = false   # set true when 'ready' event is seen
+doWatch = true         # turn off with -n
+envOnly = false        # set with -e
+debugStarbucks = false # set with -D
+readySeen = false      # set true when 'ready' event is seen
 
 # ---------------------------------------------------------------------------
 
@@ -145,12 +146,21 @@ brewStarbucksFile = (srcPath) ->
 	if newerDestFileExists(srcPath, destPath) && readySeen
 		log "   dest exists"
 		return
+	content = slurp(srcPath)
+	if debugStarbucks
+		log sep_eq
+		log content
+		log sep_eq
+
 	hParsed = pathlib.parse(srcPath)
 	hOptions = {
-		content: slurp(srcPath),
+		content: content,
 		filename: hParsed.base,
 		}
 	code = starbucks(hOptions).code
+	if debugStarbucks
+		log code
+		log sep_eq
 	output code, srcPath, destPath
 	return
 
@@ -185,7 +195,10 @@ brewTamlFile = (srcPath) ->
 
 output = (code, srcPath, destPath) ->
 
-	barf destPath, code
+	try
+		barf destPath, code
+	catch err
+		log "ERROR: #{err.message}"
 	log "   #{shortenPath(srcPath)} => #{shortenPath(destPath)}"
 	return
 
@@ -193,8 +206,9 @@ output = (code, srcPath, destPath) ->
 
 parseCmdArgs = () ->
 
+	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h n e d'),
+		boolean: words('h n e d D'),
 		unknown: (opt) ->
 			return true
 		})
@@ -206,6 +220,7 @@ parseCmdArgs = () ->
 		log "   -n process files, don't watch for changes"
 		log "   -e just display custom environment variables"
 		log "   -d turn on debugging (a lot of output!)"
+		log "   -D dump input & output from starbucks conversions"
 		log "<dir> defaults to current working directory"
 		process.exit()
 
@@ -218,6 +233,10 @@ parseCmdArgs = () ->
 	if hArgs.d
 		log "extensive debugging on"
 		setDebugging true
+
+	if hArgs.D
+		log "debugging starbucks conversions"
+		debugStarbucks = true
 
 	if hArgs._?
 		if hArgs._.length > 1

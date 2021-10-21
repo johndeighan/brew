@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, debugStarbucks, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -17,7 +17,8 @@ import {
   assert,
   undef,
   croak,
-  words
+  words,
+  sep_eq
 } from '@jdeighan/coffee-utils';
 
 import {
@@ -67,6 +68,8 @@ dirRoot = undef;
 doWatch = true; // turn off with -n
 
 envOnly = false; // set with -e
+
+debugStarbucks = false; // set with -D
 
 readySeen = false; // set true when 'ready' event is seen
 
@@ -192,18 +195,28 @@ brewCoffeeFile = function(srcPath) {
 
 // ---------------------------------------------------------------------------
 brewStarbucksFile = function(srcPath) {
-  var code, destPath, hOptions, hParsed;
+  var code, content, destPath, hOptions, hParsed;
   destPath = withExt(srcPath, '.svelte').replace('_', '');
   if (newerDestFileExists(srcPath, destPath) && readySeen) {
     log("   dest exists");
     return;
   }
+  content = slurp(srcPath);
+  if (debugStarbucks) {
+    log(sep_eq);
+    log(content);
+    log(sep_eq);
+  }
   hParsed = pathlib.parse(srcPath);
   hOptions = {
-    content: slurp(srcPath),
+    content: content,
     filename: hParsed.base
   };
   code = starbucks(hOptions).code;
+  if (debugStarbucks) {
+    log(code);
+    log(sep_eq);
+  }
   output(code, srcPath, destPath);
 };
 
@@ -233,15 +246,22 @@ export let ${stub} = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 
 // ---------------------------------------------------------------------------
 output = function(code, srcPath, destPath) {
-  barf(destPath, code);
+  var err;
+  try {
+    barf(destPath, code);
+  } catch (error) {
+    err = error;
+    log(`ERROR: ${err.message}`);
+  }
   log(`   ${shortenPath(srcPath)} => ${shortenPath(destPath)}`);
 };
 
 // ---------------------------------------------------------------------------
 parseCmdArgs = function() {
   var hArgs;
+  // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n e d'),
+    boolean: words('h n e d D'),
     unknown: function(opt) {
       return true;
     }
@@ -253,6 +273,7 @@ parseCmdArgs = function() {
     log("   -n process files, don't watch for changes");
     log("   -e just display custom environment variables");
     log("   -d turn on debugging (a lot of output!)");
+    log("   -D dump input & output from starbucks conversions");
     log("<dir> defaults to current working directory");
     process.exit();
   }
@@ -265,6 +286,10 @@ parseCmdArgs = function() {
   if (hArgs.d) {
     log("extensive debugging on");
     setDebugging(true);
+  }
+  if (hArgs.D) {
+    log("debugging starbucks conversions");
+    debugStarbucks = true;
   }
   if (hArgs._ != null) {
     if (hArgs._.length > 1) {
