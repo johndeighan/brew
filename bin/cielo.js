@@ -122,42 +122,42 @@ main = function() {
           if (err) {
             return log(`exec() failed: ${err.message}`);
           } else {
-            log("RESULT OF EXECUTION:");
+            log("OUTPUT:");
             log(stdout);
             return log(sep_eq);
           }
         });
       }
     }
-    process.exit();
+  } else {
+    watcher = chokidar.watch(dirRoot, {
+      persistent: doWatch
+    });
+    watcher.on('all', function(event, path) {
+      var lMatches;
+      if (event === 'ready') {
+        readySeen = true;
+        if (doWatch) {
+          log("...watching for further file changes");
+        } else {
+          log("...not watching for further file changes");
+        }
+        return;
+      }
+      if (path.match(/node_modules/)) {
+        return;
+      }
+      if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
+        log(`${event} ${shortenPath(path)}`);
+        ext = lMatches[0];
+        if (event === 'unlink') {
+          return unlinkRelatedFiles(path, ext);
+        } else {
+          return brewFile(path);
+        }
+      }
+    });
   }
-  watcher = chokidar.watch(dirRoot, {
-    persistent: doWatch
-  });
-  watcher.on('all', function(event, path) {
-    var lMatches;
-    if (event === 'ready') {
-      readySeen = true;
-      if (doWatch) {
-        log("...watching for further file changes");
-      } else {
-        log("...not watching for further file changes");
-      }
-      return;
-    }
-    if (path.match(/node_modules/)) {
-      return;
-    }
-    if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
-      log(`${event} ${shortenPath(path)}`);
-      ext = lMatches[0];
-      if (event === 'unlink') {
-        unlinkRelatedFiles(path, ext);
-      } else {
-        brewFile(path);
-      }
-    }
-  });
 };
 
 // ---------------------------------------------------------------------------

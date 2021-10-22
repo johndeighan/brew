@@ -68,38 +68,35 @@ main = () ->
 					if err
 						log "exec() failed: #{err.message}"
 					else
-						log "RESULT OF EXECUTION:"
+						log "OUTPUT:"
 						log stdout
 						log sep_eq
 					)
-		process.exit()
+	else
+		watcher = chokidar.watch(dirRoot, {
+			persistent: doWatch,
+			})
 
-	watcher = chokidar.watch(dirRoot, {
-		persistent: doWatch,
-		})
+		watcher.on 'all', (event, path) ->
 
-	watcher.on 'all', (event, path) ->
+			if event == 'ready'
+				readySeen = true
+				if doWatch
+					log "...watching for further file changes"
+				else
+					log "...not watching for further file changes"
+				return
 
-		if event == 'ready'
-			readySeen = true
-			if doWatch
-				log "...watching for further file changes"
-			else
-				log "...not watching for further file changes"
-			return
+			if path.match(/node_modules/)
+				return
 
-		if path.match(/node_modules/)
-			return
-
-		if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
-			log "#{event} #{shortenPath(path)}"
-			ext = lMatches[0]
-			if event == 'unlink'
-				unlinkRelatedFiles(path, ext)
-			else
-				brewFile path
-		return
-
+			if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
+				log "#{event} #{shortenPath(path)}"
+				ext = lMatches[0]
+				if event == 'unlink'
+					unlinkRelatedFiles(path, ext)
+				else
+					brewFile path
 	return
 
 # ---------------------------------------------------------------------------
