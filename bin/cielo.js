@@ -310,18 +310,20 @@ parseCmdArgs = function() {
 checkDir = function(name) {
   var dir;
   dir = hPrivEnv[name];
-  if (dir != null) {
-    assert(fs.existsSync(dir), "Please run cielo from your root directory");
+  if (dir && !fs.existsSync(dir)) {
+    warn(`directory ${dir} does not exist - removing`);
+    delete hPrivEnv[name];
   }
 };
 
 // ---------------------------------------------------------------------------
 checkDirs = function() {
-  checkDir('DIR_ROOT');
-  checkDir('DIR_COMPONENTS');
-  checkDir('DIR_STORES');
-  checkDir('DIR_DATA');
-  checkDir('DIR_MARKDOWN');
+  var key;
+  for (key in hPrivEnv) {
+    if (key.match(/^DIR_/)) {
+      checkDir(key);
+    }
+  }
 };
 
 // ---------------------------------------------------------------------------

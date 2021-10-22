@@ -5,7 +5,9 @@ import pathlib from 'path'
 import fs from 'fs'
 import chokidar from 'chokidar'         # file watcher
 
-import {assert, undef, croak, words, sep_eq} from '@jdeighan/coffee-utils'
+import {
+	assert, undef, warn, croak, words, sep_eq,
+	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
 	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
@@ -255,19 +257,18 @@ parseCmdArgs = () ->
 checkDir = (name) ->
 
 	dir = hPrivEnv[name]
-	if dir?
-		assert fs.existsSync(dir), "Please run cielo from your root directory"
+	if dir && ! fs.existsSync(dir)
+		warn "directory #{dir} does not exist - removing"
+		delete hPrivEnv[name]
 	return
 
 # ---------------------------------------------------------------------------
 
 checkDirs = () ->
 
-	checkDir('DIR_ROOT')
-	checkDir('DIR_COMPONENTS')
-	checkDir('DIR_STORES')
-	checkDir('DIR_DATA')
-	checkDir('DIR_MARKDOWN')
+	for key of hPrivEnv
+		if key.match(/^DIR_/)
+			checkDir(key)
 	return
 
 # ---------------------------------------------------------------------------
