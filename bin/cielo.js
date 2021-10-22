@@ -115,12 +115,13 @@ main = function() {
       }
       if (doExec && ((ext === '.cielo') || (ext === '.coffee'))) {
         // --- Execute the corresponding *.js file
+        log(sep_eq);
         jsPath = withExt(path, '.js');
+        log(`...execute ${jsPath}`);
         exec(`node ${jsPath}`, function(err, stdout, stderr) {
           if (err) {
             return log(`exec() failed: ${err.message}`);
           } else {
-            log(sep_eq);
             log("RESULT OF EXECUTION:");
             log(stdout);
             return log(sep_eq);
@@ -349,6 +350,7 @@ parseCmdArgs = function() {
     doForce = true;
   }
   if (hArgs.x) {
+    log("executing *.cielo and/or *.coffee files");
     doExec = true;
   }
   if (hArgs.D) {

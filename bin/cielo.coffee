@@ -61,12 +61,13 @@ main = () ->
 
 			if doExec && ((ext == '.cielo') || (ext == '.coffee'))
 				# --- Execute the corresponding *.js file
+				log sep_eq
 				jsPath = withExt(path, '.js')
+				log "...execute #{jsPath}"
 				exec("node #{jsPath}", (err, stdout, stderr) ->
 					if err
 						log "exec() failed: #{err.message}"
 					else
-						log sep_eq
 						log "RESULT OF EXECUTION:"
 						log stdout
 						log sep_eq
@@ -284,6 +285,7 @@ parseCmdArgs = () ->
 		doForce = true
 
 	if hArgs.x
+		log "executing *.cielo and/or *.coffee files"
 		doExec = true
 
 	if hArgs.D
