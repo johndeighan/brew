@@ -120,7 +120,10 @@ main = function() {
           if (err) {
             return log(`exec() failed: ${err.message}`);
           } else {
-            return log(stdout);
+            log(sep_eq);
+            log("RESULT OF EXECUTION:");
+            log(stdout);
+            return log(sep_eq);
           }
         });
       }

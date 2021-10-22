@@ -66,7 +66,10 @@ main = () ->
 					if err
 						log "exec() failed: #{err.message}"
 					else
+						log sep_eq
+						log "RESULT OF EXECUTION:"
 						log stdout
+						log sep_eq
 					)
 		process.exit()
 
