@@ -22,18 +22,17 @@ import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo, brewCoffee} from './brewCielo.js'
 
-###
-	cielo [-h | -n | -e | -d | -f | -D | -x ] [ <files or directory> ]
-###
-
 dirRoot = undef
 lFiles = []            # to process individual files
 
-doForce = false        # turn on with -f
-doWatch = true         # turn off with -n
-doExec = false         # execute *.js file for *.cielo files on cmd line
+# --- Default values for flags
+doWatch = false        # set with -w
 envOnly = false        # set with -e
-debugStarbucks = false # set with -D
+doDebug = false        # set with -d
+doForce = false        # set with -f
+doExec = false         # execute *.js file for *.cielo files on cmd line
+debugStarbucks = false # set with -s
+
 readySeen = false      # set true when 'ready' event is seen
 
 # ---------------------------------------------------------------------------
@@ -41,19 +40,28 @@ readySeen = false      # set true when 'ready' event is seen
 main = () ->
 
 	parseCmdArgs()
-	log "DIR_ROOT: #{dirRoot}"
+	if doDebug
+		log "DIR_ROOT: #{dirRoot}"
 
 	loadPrivEnvFrom(dirRoot)
-	checkDirs()
-	logPrivEnv()
 	if envOnly
+		doDebug = true
+		checkDirs()
+		logPrivEnv()
 		process.exit()
+	else
+		checkDirs()
+
+	if doDebug
+		logPrivEnv()
 
 	if nonEmpty(lFiles)
 		# --- Process only these files
+		nExec = 0           # --- number of files executed
 		for path in lFiles
-			ext = fileExt(path)
 			brewFile path
+
+			ext = fileExt(path)
 			if ext == '.cielo'
 				# --- *.coffee file was created, but we
 				#     also want to create the *.js file
@@ -61,16 +69,20 @@ main = () ->
 
 			if doExec && ((ext == '.cielo') || (ext == '.coffee'))
 				# --- Execute the corresponding *.js file
-				log sep_eq
 				jsPath = withExt(path, '.js')
-				log "...execute #{jsPath}"
+
+				# --- add separator line for 2nd and later executions
+				if (nExec > 0)
+					log sep_eq
+
+				if doDebug
+					log "...execute #{jsPath}"
+
 				exec("node #{jsPath}", (err, stdout, stderr) ->
 					if err
 						log "exec() failed: #{err.message}"
 					else
-						log "OUTPUT:"
 						log stdout
-						log sep_eq
 					)
 	else
 		watcher = chokidar.watch(dirRoot, {
@@ -81,17 +93,19 @@ main = () ->
 
 			if event == 'ready'
 				readySeen = true
-				if doWatch
-					log "...watching for further file changes"
-				else
-					log "...not watching for further file changes"
+				if doDebug
+					if doWatch
+						log "...watching for further file changes"
+					else
+						log "...not watching for further file changes"
 				return
 
 			if path.match(/node_modules/)
 				return
 
 			if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
-				log "#{event} #{shortenPath(path)}"
+				if doDebug || readySeen
+					log "#{event} #{shortenPath(path)}"
 				ext = lMatches[0]
 				if event == 'unlink'
 					unlinkRelatedFiles(path, ext)
@@ -103,7 +117,8 @@ main = () ->
 
 brewFile = (path) ->
 
-	log "brew #{shortenPath(path)}"
+	if doDebug || readySeen
+		log "brew #{shortenPath(path)}"
 	switch fileExt(path)
 		when '.cielo'
 			brewCieloFile path
@@ -148,7 +163,8 @@ removeFile = (path, ext) ->
 	fullpath = withExt(path, ext)
 	try
 		fs.unlinkSync fullpath
-		log "   unlink #{filename}"
+		if doDebug || readySeen
+			log "   unlink #{filename}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -158,7 +174,8 @@ doProcess = (srcPath, destPath) ->
 	if doForce || readySeen
 		return true
 	if newerDestFileExists(srcPath, destPath)
-		log "   dest exists"
+		if doDebug || readySeen
+			log "   dest exists"
 		return false
 	return true
 
@@ -219,7 +236,8 @@ brewTamlFile = (srcPath) ->
 		envDir = hPrivEnv.DIR_STORES
 		assert envDir, "DIR_STORES is not set!"
 		if (srcDir != envDir)
-			log "   #{srcDir} is not #{envDir}"
+			if doDebug
+				log "   SKIPPING: #{srcDir} is not #{envDir}"
 			return
 
 		hInfo = pathlib.parse(destPath)
@@ -241,7 +259,8 @@ output = (code, srcPath, destPath) ->
 		barf destPath, code
 	catch err
 		log "ERROR: #{err.message}"
-	log "   #{shortenPath(srcPath)} => #{shortenPath(destPath)}"
+	if doDebug || readySeen
+		log "   #{shortenPath(srcPath)} => #{shortenPath(destPath)}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -259,35 +278,25 @@ parseCmdArgs = () ->
 	if hArgs.h
 		log "cielo [ <dir> ]"
 		log "   -h help"
-		log "   -n process files, don't watch for changes"
+		log "   -w process files, then watch for changes"
 		log "   -e just display custom environment variables"
-		log "   -d turn on debugging (a lot of output!)"
+		log "   -d turn on some debugging"
 		log "   -f initially, process all files, even up to date"
 		log "   -x execute *.cielo files on cmd line"
-		log "   -D dump input & output from starbucks conversions"
+		log "   -s dump input & output from starbucks conversions"
+		log "   -D turn on debugging (a lot of output!)"
 		log "<dir> defaults to current working directory"
 		process.exit()
 
-	if hArgs.n
-		doWatch = false
-
-	if hArgs.e
-		envOnly = true
-
-	if hArgs.d
-		log "extensive debugging on"
-		setDebugging true
-
-	if hArgs.f
-		doForce = true
-
-	if hArgs.x
-		log "executing *.cielo and/or *.coffee files"
-		doExec = true
+	doWatch = hArgs.w
+	envOnly = hArgs.e
+	doDebug = hArgs.d
+	doForce = hArgs.f
+	doExec  = hArgs.x
+	debugStarbucks = hArgs.s
 
 	if hArgs.D
-		log "debugging starbucks conversions"
-		debugStarbucks = true
+		setDebugging true
 
 	if hArgs._?
 		for path in hArgs._
@@ -317,12 +326,13 @@ parseCmdArgs = () ->
 
 # ---------------------------------------------------------------------------
 
-checkDir = (name) ->
+checkDir = (key) ->
 
-	dir = hPrivEnv[name]
+	dir = hPrivEnv[key]
 	if dir && ! fs.existsSync(dir)
-		warn "directory #{dir} does not exist - removing"
-		delete hPrivEnv[name]
+		if doDebug
+			warn "directory #{key} '#{dir}' does not exist - removing"
+		delete hPrivEnv[key]
 	return
 
 # ---------------------------------------------------------------------------

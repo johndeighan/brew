@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 ;
-/*
-	cielo [-h | -n | -e | -d | -f | -D | -x ] [ <files or directory> ]
-*/
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doExec, doForce, doProcess, doWatch, envOnly, lFiles, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doProcess, doWatch, envOnly, lFiles, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -78,36 +75,49 @@ dirRoot = undef;
 
 lFiles = []; // to process individual files
 
-doForce = false; // turn on with -f
 
-doWatch = true; // turn off with -n
-
-doExec = false; // execute *.js file for *.cielo files on cmd line
+// --- Default values for flags
+doWatch = false; // set with -w
 
 envOnly = false; // set with -e
 
-debugStarbucks = false; // set with -D
+doDebug = false; // set with -d
+
+doForce = false; // set with -f
+
+doExec = false; // execute *.js file for *.cielo files on cmd line
+
+debugStarbucks = false; // set with -s
 
 readySeen = false; // set true when 'ready' event is seen
 
 
 // ---------------------------------------------------------------------------
 main = function() {
-  var ext, i, jsPath, len, path, watcher;
+  var ext, i, jsPath, len, nExec, path, watcher;
   parseCmdArgs();
-  log(`DIR_ROOT: ${dirRoot}`);
+  if (doDebug) {
+    log(`DIR_ROOT: ${dirRoot}`);
+  }
   loadPrivEnvFrom(dirRoot);
-  checkDirs();
-  logPrivEnv();
   if (envOnly) {
+    doDebug = true;
+    checkDirs();
+    logPrivEnv();
     process.exit();
+  } else {
+    checkDirs();
+  }
+  if (doDebug) {
+    logPrivEnv();
   }
   if (nonEmpty(lFiles)) {
-// --- Process only these files
+    // --- Process only these files
+    nExec = 0; // --- number of files executed
     for (i = 0, len = lFiles.length; i < len; i++) {
       path = lFiles[i];
-      ext = fileExt(path);
       brewFile(path);
+      ext = fileExt(path);
       if (ext === '.cielo') {
         // --- *.coffee file was created, but we
         //     also want to create the *.js file
@@ -115,16 +125,19 @@ main = function() {
       }
       if (doExec && ((ext === '.cielo') || (ext === '.coffee'))) {
         // --- Execute the corresponding *.js file
-        log(sep_eq);
         jsPath = withExt(path, '.js');
-        log(`...execute ${jsPath}`);
+        // --- add separator line for 2nd and later executions
+        if (nExec > 0) {
+          log(sep_eq);
+        }
+        if (doDebug) {
+          log(`...execute ${jsPath}`);
+        }
         exec(`node ${jsPath}`, function(err, stdout, stderr) {
           if (err) {
             return log(`exec() failed: ${err.message}`);
           } else {
-            log("OUTPUT:");
-            log(stdout);
-            return log(sep_eq);
+            return log(stdout);
           }
         });
       }
@@ -137,10 +150,12 @@ main = function() {
       var lMatches;
       if (event === 'ready') {
         readySeen = true;
-        if (doWatch) {
-          log("...watching for further file changes");
-        } else {
-          log("...not watching for further file changes");
+        if (doDebug) {
+          if (doWatch) {
+            log("...watching for further file changes");
+          } else {
+            log("...not watching for further file changes");
+          }
         }
         return;
       }
@@ -148,7 +163,9 @@ main = function() {
         return;
       }
       if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
-        log(`${event} ${shortenPath(path)}`);
+        if (doDebug || readySeen) {
+          log(`${event} ${shortenPath(path)}`);
+        }
         ext = lMatches[0];
         if (event === 'unlink') {
           return unlinkRelatedFiles(path, ext);
@@ -162,7 +179,9 @@ main = function() {
 
 // ---------------------------------------------------------------------------
 brewFile = function(path) {
-  log(`brew ${shortenPath(path)}`);
+  if (doDebug || readySeen) {
+    log(`brew ${shortenPath(path)}`);
+  }
   switch (fileExt(path)) {
     case '.cielo':
       brewCieloFile(path);
@@ -216,7 +235,9 @@ removeFile = function(path, ext) {
   fullpath = withExt(path, ext);
   try {
     fs.unlinkSync(fullpath);
-    log(`   unlink ${filename}`);
+    if (doDebug || readySeen) {
+      log(`   unlink ${filename}`);
+    }
   } catch (error) {}
 };
 
@@ -226,7 +247,9 @@ doProcess = function(srcPath, destPath) {
     return true;
   }
   if (newerDestFileExists(srcPath, destPath)) {
-    log("   dest exists");
+    if (doDebug || readySeen) {
+      log("   dest exists");
+    }
     return false;
   }
   return true;
@@ -289,7 +312,9 @@ brewTamlFile = function(srcPath) {
     envDir = hPrivEnv.DIR_STORES;
     assert(envDir, "DIR_STORES is not set!");
     if (srcDir !== envDir) {
-      log(`   ${srcDir} is not ${envDir}`);
+      if (doDebug) {
+        log(`   SKIPPING: ${srcDir} is not ${envDir}`);
+      }
       return;
     }
     hInfo = pathlib.parse(destPath);
@@ -310,7 +335,9 @@ output = function(code, srcPath, destPath) {
     err = error;
     log(`ERROR: ${err.message}`);
   }
-  log(`   ${shortenPath(srcPath)} => ${shortenPath(destPath)}`);
+  if (doDebug || readySeen) {
+    log(`   ${shortenPath(srcPath)} => ${shortenPath(destPath)}`);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -327,35 +354,24 @@ parseCmdArgs = function() {
   if (hArgs.h) {
     log("cielo [ <dir> ]");
     log("   -h help");
-    log("   -n process files, don't watch for changes");
+    log("   -w process files, then watch for changes");
     log("   -e just display custom environment variables");
-    log("   -d turn on debugging (a lot of output!)");
+    log("   -d turn on some debugging");
     log("   -f initially, process all files, even up to date");
     log("   -x execute *.cielo files on cmd line");
-    log("   -D dump input & output from starbucks conversions");
+    log("   -s dump input & output from starbucks conversions");
+    log("   -D turn on debugging (a lot of output!)");
     log("<dir> defaults to current working directory");
     process.exit();
   }
-  if (hArgs.n) {
-    doWatch = false;
-  }
-  if (hArgs.e) {
-    envOnly = true;
-  }
-  if (hArgs.d) {
-    log("extensive debugging on");
-    setDebugging(true);
-  }
-  if (hArgs.f) {
-    doForce = true;
-  }
-  if (hArgs.x) {
-    log("executing *.cielo and/or *.coffee files");
-    doExec = true;
-  }
+  doWatch = hArgs.w;
+  envOnly = hArgs.e;
+  doDebug = hArgs.d;
+  doForce = hArgs.f;
+  doExec = hArgs.x;
+  debugStarbucks = hArgs.s;
   if (hArgs.D) {
-    log("debugging starbucks conversions");
-    debugStarbucks = true;
+    setDebugging(true);
   }
   if (hArgs._ != null) {
     ref = hArgs._;
@@ -393,12 +409,14 @@ parseCmdArgs = function() {
 };
 
 // ---------------------------------------------------------------------------
-checkDir = function(name) {
+checkDir = function(key) {
   var dir;
-  dir = hPrivEnv[name];
+  dir = hPrivEnv[key];
   if (dir && !fs.existsSync(dir)) {
-    warn(`directory ${dir} does not exist - removing`);
-    delete hPrivEnv[name];
+    if (doDebug) {
+      warn(`directory ${key} '${dir}' does not exist - removing`);
+    }
+    delete hPrivEnv[key];
   }
 };
 
