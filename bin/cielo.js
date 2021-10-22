@@ -3,7 +3,7 @@
 /*
 	cielo [-h | -n | -e | -d ]
 */
-var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, debugStarbucks, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -80,6 +80,7 @@ main = function() {
   parseCmdArgs();
   log(`DIR_ROOT: ${dirRoot}`);
   loadPrivEnvFrom(dirRoot);
+  checkDirs();
   logPrivEnv();
   if (envOnly) {
     process.exit();
@@ -303,6 +304,24 @@ parseCmdArgs = function() {
       dirRoot = process.env.DIR_ROOT = mkpath(process.cwd());
     }
   }
+};
+
+// ---------------------------------------------------------------------------
+checkDir = function(name) {
+  var dir;
+  dir = hPrivEnv[name];
+  if (dir != null) {
+    assert(fs.existsSync(dir), "Please run cielo from your root directory");
+  }
+};
+
+// ---------------------------------------------------------------------------
+checkDirs = function() {
+  checkDir('DIR_ROOT');
+  checkDir('DIR_COMPONENTS');
+  checkDir('DIR_STORES');
+  checkDir('DIR_DATA');
+  checkDir('DIR_MARKDOWN');
 };
 
 // ---------------------------------------------------------------------------

@@ -36,6 +36,7 @@ main = () ->
 	log "DIR_ROOT: #{dirRoot}"
 
 	loadPrivEnvFrom(dirRoot)
+	checkDirs()
 	logPrivEnv()
 	if envOnly
 		process.exit()
@@ -247,6 +248,26 @@ parseCmdArgs = () ->
 			dirRoot = mkpath(process.env.DIR_ROOT)
 		else
 			dirRoot = process.env.DIR_ROOT = mkpath(process.cwd())
+	return
+
+# ---------------------------------------------------------------------------
+
+checkDir = (name) ->
+
+	dir = hPrivEnv[name]
+	if dir?
+		assert fs.existsSync(dir), "Please run cielo from your root directory"
+	return
+
+# ---------------------------------------------------------------------------
+
+checkDirs = () ->
+
+	checkDir('DIR_ROOT')
+	checkDir('DIR_COMPONENTS')
+	checkDir('DIR_STORES')
+	checkDir('DIR_DATA')
+	checkDir('DIR_MARKDOWN')
 	return
 
 # ---------------------------------------------------------------------------
