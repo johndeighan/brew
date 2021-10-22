@@ -4,6 +4,7 @@ import parseArgs from 'minimist'
 import pathlib from 'path'
 import fs from 'fs'
 import chokidar from 'chokidar'         # file watcher
+import {exec} from 'child_process'
 
 import {
 	assert, undef, warn, croak, words, sep_eq, nonEmpty,
@@ -11,7 +12,8 @@ import {
 import {log} from '@jdeighan/coffee-utils/log'
 import {
 	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
-	shortenPath, isFile, isDir, isSimpleFileName,
+	shortenPath, isFile, isDir, isSimpleFileName, getFullPath,
+	fileExt
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
@@ -21,7 +23,7 @@ import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo, brewCoffee} from './brewCielo.js'
 
 ###
-	cielo [-h | -n | -e | -d | -f | -D ] [ <files or directory> ]
+	cielo [-h | -n | -e | -d | -f | -D | -x ] [ <files or directory> ]
 ###
 
 dirRoot = undef
@@ -29,6 +31,7 @@ lFiles = []            # to process individual files
 
 doForce = false        # turn on with -f
 doWatch = true         # turn off with -n
+doExec = false         # execute *.js file for *.cielo files on cmd line
 envOnly = false        # set with -e
 debugStarbucks = false # set with -D
 readySeen = false      # set true when 'ready' event is seen
@@ -49,7 +52,22 @@ main = () ->
 	if nonEmpty(lFiles)
 		# --- Process only these files
 		for path in lFiles
+			ext = fileExt(path)
 			brewFile path
+			if ext == '.cielo'
+				# --- *.coffee file was created, but we
+				#     also want to create the *.js file
+				brewFile withExt(path, '.coffee')
+
+			if doExec && ((ext == '.cielo') || (ext == '.coffee'))
+				# --- Execute the corresponding *.js file
+				jsPath = withExt(path, '.js')
+				exec("node #{jsPath}", (err, stdout, stderr) ->
+					if err
+						log "exec() failed: #{err.message}"
+					else
+						log stdout
+					)
 		process.exit()
 
 	watcher = chokidar.watch(dirRoot, {
@@ -75,19 +93,27 @@ main = () ->
 			if event == 'unlink'
 				unlinkRelatedFiles(path, ext)
 			else
-				switch ext
-					when '.cielo'
-						brewCieloFile(path)
-					when '.coffee'
-						brewCoffeeFile(path)
-					when '.starbucks'
-						brewStarbucksFile(path)
-					when '.taml'
-						brewTamlFile(path)
-					else
-						croak "Invalid file extension: '#{ext}'"
+				brewFile path
 		return
 
+	return
+
+# ---------------------------------------------------------------------------
+
+brewFile = (path) ->
+
+	log "brew #{shortenPath(path)}"
+	switch fileExt(path)
+		when '.cielo'
+			brewCieloFile path
+		when '.coffee'
+			brewCoffeeFile path
+		when '.starbucks'
+			brewStarbucksFile path
+		when '.taml'
+			brewTamlFile path
+		else
+			croak "Unknown file type: #{path}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -126,25 +152,14 @@ removeFile = (path, ext) ->
 
 # ---------------------------------------------------------------------------
 
-brewFile = (srcPath) ->
+doProcess = (srcPath, destPath) ->
 
-	if lMatches = srcPath.match(/\.(?:cielo|coffee|starbucks|taml)$/)
-		log "brew #{shortenPath(srcPath)}"
-		ext = lMatches[0]
-		switch ext
-			when '.cielo'
-				brewCieloFile(srcPath)
-			when '.coffee'
-				brewCoffeeFile(srcPath)
-			when '.starbucks'
-				brewStarbucksFile(srcPath)
-			when '.taml'
-				brewTamlFile(srcPath)
-			else
-				croak "Invalid file extension: '#{ext}'"
-	else
-		croak "Unknown file type: #{srcPath}"
-	return
+	if doForce || readySeen
+		return true
+	if newerDestFileExists(srcPath, destPath)
+		log "   dest exists"
+		return false
+	return true
 
 # ---------------------------------------------------------------------------
 
@@ -152,11 +167,9 @@ brewCieloFile = (srcPath) ->
 	# --- cielo => coffee
 
 	destPath = withExt(srcPath, '.coffee')
-	if newerDestFileExists(srcPath, destPath) && readySeen
-		log "   dest exists"
-		return
-	coffeeCode = brewCielo(slurp(srcPath))
-	output coffeeCode, srcPath, destPath
+	if doProcess(srcPath, destPath)
+		coffeeCode = brewCielo(slurp(srcPath))
+		output coffeeCode, srcPath, destPath
 	return
 
 # ---------------------------------------------------------------------------
@@ -165,11 +178,9 @@ brewCoffeeFile = (srcPath) ->
 	# --- coffee => js
 
 	destPath = withExt(srcPath, '.js').replace('_', '')
-	if newerDestFileExists(srcPath, destPath) && readySeen
-		log "   dest exists"
-		return
-	jsCode = brewCoffee(slurp(srcPath))
-	output jsCode, srcPath, destPath
+	if doProcess(srcPath, destPath)
+		jsCode = brewCoffee(slurp(srcPath))
+		output jsCode, srcPath, destPath
 	return
 
 # ---------------------------------------------------------------------------
@@ -177,25 +188,23 @@ brewCoffeeFile = (srcPath) ->
 brewStarbucksFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.svelte').replace('_', '')
-	if newerDestFileExists(srcPath, destPath) && readySeen
-		log "   dest exists"
-		return
-	content = slurp(srcPath)
-	if debugStarbucks
-		log sep_eq
-		log content
-		log sep_eq
+	if doProcess(srcPath, destPath)
+		content = slurp(srcPath)
+		if debugStarbucks
+			log sep_eq
+			log content
+			log sep_eq
 
-	hParsed = pathlib.parse(srcPath)
-	hOptions = {
-		content: content,
-		filename: hParsed.base,
-		}
-	code = starbucks(hOptions).code
-	if debugStarbucks
-		log code
-		log sep_eq
-	output code, srcPath, destPath
+		hParsed = pathlib.parse(srcPath)
+		hOptions = {
+			content: content,
+			filename: hParsed.base,
+			}
+		code = starbucks(hOptions).code
+		if debugStarbucks
+			log code
+			log sep_eq
+		output code, srcPath, destPath
 	return
 
 # ---------------------------------------------------------------------------
@@ -203,26 +212,24 @@ brewStarbucksFile = (srcPath) ->
 brewTamlFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.js').replace('_', '')
-	if newerDestFileExists(srcPath, destPath) && readySeen
-		log "   dest exists"
-		return
-	hParsed = pathlib.parse(srcPath)
-	srcDir = mkpath(hParsed.dir)
-	envDir = hPrivEnv.DIR_STORES
-	assert envDir, "DIR_STORES is not set!"
-	if (srcDir != envDir)
-		log "   #{srcDir} is not #{envDir}"
-		return
+	if doProcess(srcPath, destPath)
+		hParsed = pathlib.parse(srcPath)
+		srcDir = mkpath(hParsed.dir)
+		envDir = hPrivEnv.DIR_STORES
+		assert envDir, "DIR_STORES is not set!"
+		if (srcDir != envDir)
+			log "   #{srcDir} is not #{envDir}"
+			return
 
-	hInfo = pathlib.parse(destPath)
-	stub = hInfo.name
+		hInfo = pathlib.parse(destPath)
+		stub = hInfo.name
 
-	tamlCode = slurp(srcPath)
-	output("""
-		import {TAMLDataStore} from '@jdeighan/starbucks/stores';
+		tamlCode = slurp(srcPath)
+		output("""
+			import {TAMLDataStore} from '@jdeighan/starbucks/stores';
 
-		export let #{stub} = new TAMLDataStore(`#{tamlCode}`);
-		""", srcPath, destPath)
+			export let #{stub} = new TAMLDataStore(`#{tamlCode}`);
+			""", srcPath, destPath)
 	return
 
 # ---------------------------------------------------------------------------
@@ -242,7 +249,7 @@ parseCmdArgs = () ->
 
 	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h n e d f D'),
+		boolean: words('h n e d f x D'),
 		unknown: (opt) ->
 			return true
 		})
@@ -255,6 +262,7 @@ parseCmdArgs = () ->
 		log "   -e just display custom environment variables"
 		log "   -d turn on debugging (a lot of output!)"
 		log "   -f initially, process all files, even up to date"
+		log "   -x execute *.cielo files on cmd line"
 		log "   -D dump input & output from starbucks conversions"
 		log "<dir> defaults to current working directory"
 		process.exit()
@@ -272,13 +280,19 @@ parseCmdArgs = () ->
 	if hArgs.f
 		doForce = true
 
+	if hArgs.x
+		doExec = true
+
 	if hArgs.D
 		log "debugging starbucks conversions"
 		debugStarbucks = true
 
 	if hArgs._?
 		for path in hArgs._
-			path = mkpath(path)    # convert \ to /
+			if path.indexOf('.') == 0
+				path = getFullPath(path)  # converts \ to /
+			else
+				path = mkpath(path)    # convert \ to /
 			if isDir(path)
 				assert ! dirRoot, "multiple dirs not allowed"
 				dirRoot = path

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 ;
 /*
-	cielo [-h | -n | -e | -d | -f | -D ] [ <files or directory> ]
+	cielo [-h | -n | -e | -d | -f | -D | -x ] [ <files or directory> ]
 */
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doForce, doWatch, envOnly, lFiles, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doExec, doForce, doProcess, doWatch, envOnly, lFiles, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -12,6 +12,10 @@ import pathlib from 'path';
 import fs from 'fs';
 
 import chokidar from 'chokidar';
+
+import {
+  exec
+} from 'child_process';
 
 import {
   assert,
@@ -37,7 +41,9 @@ import {
   shortenPath,
   isFile,
   isDir,
-  isSimpleFileName
+  isSimpleFileName,
+  getFullPath,
+  fileExt
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -76,6 +82,8 @@ doForce = false; // turn on with -f
 
 doWatch = true; // turn off with -n
 
+doExec = false; // execute *.js file for *.cielo files on cmd line
+
 envOnly = false; // set with -e
 
 debugStarbucks = false; // set with -D
@@ -85,7 +93,7 @@ readySeen = false; // set true when 'ready' event is seen
 
 // ---------------------------------------------------------------------------
 main = function() {
-  var i, len, path, watcher;
+  var ext, i, jsPath, len, path, watcher;
   parseCmdArgs();
   log(`DIR_ROOT: ${dirRoot}`);
   loadPrivEnvFrom(dirRoot);
@@ -98,7 +106,24 @@ main = function() {
 // --- Process only these files
     for (i = 0, len = lFiles.length; i < len; i++) {
       path = lFiles[i];
+      ext = fileExt(path);
       brewFile(path);
+      if (ext === '.cielo') {
+        // --- *.coffee file was created, but we
+        //     also want to create the *.js file
+        brewFile(withExt(path, '.coffee'));
+      }
+      if (doExec && ((ext === '.cielo') || (ext === '.coffee'))) {
+        // --- Execute the corresponding *.js file
+        jsPath = withExt(path, '.js');
+        exec(`node ${jsPath}`, function(err, stdout, stderr) {
+          if (err) {
+            return log(`exec() failed: ${err.message}`);
+          } else {
+            return log(stdout);
+          }
+        });
+      }
     }
     process.exit();
   }
@@ -106,7 +131,7 @@ main = function() {
     persistent: doWatch
   });
   watcher.on('all', function(event, path) {
-    var ext, lMatches;
+    var lMatches;
     if (event === 'ready') {
       readySeen = true;
       if (doWatch) {
@@ -125,25 +150,31 @@ main = function() {
       if (event === 'unlink') {
         unlinkRelatedFiles(path, ext);
       } else {
-        switch (ext) {
-          case '.cielo':
-            brewCieloFile(path);
-            break;
-          case '.coffee':
-            brewCoffeeFile(path);
-            break;
-          case '.starbucks':
-            brewStarbucksFile(path);
-            break;
-          case '.taml':
-            brewTamlFile(path);
-            break;
-          default:
-            croak(`Invalid file extension: '${ext}'`);
-        }
+        brewFile(path);
       }
     }
   });
+};
+
+// ---------------------------------------------------------------------------
+brewFile = function(path) {
+  log(`brew ${shortenPath(path)}`);
+  switch (fileExt(path)) {
+    case '.cielo':
+      brewCieloFile(path);
+      break;
+    case '.coffee':
+      brewCoffeeFile(path);
+      break;
+    case '.starbucks':
+      brewStarbucksFile(path);
+      break;
+    case '.taml':
+      brewTamlFile(path);
+      break;
+    default:
+      croak(`Unknown file type: ${path}`);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -186,30 +217,15 @@ removeFile = function(path, ext) {
 };
 
 // ---------------------------------------------------------------------------
-brewFile = function(srcPath) {
-  var ext, lMatches;
-  if (lMatches = srcPath.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
-    log(`brew ${shortenPath(srcPath)}`);
-    ext = lMatches[0];
-    switch (ext) {
-      case '.cielo':
-        brewCieloFile(srcPath);
-        break;
-      case '.coffee':
-        brewCoffeeFile(srcPath);
-        break;
-      case '.starbucks':
-        brewStarbucksFile(srcPath);
-        break;
-      case '.taml':
-        brewTamlFile(srcPath);
-        break;
-      default:
-        croak(`Invalid file extension: '${ext}'`);
-    }
-  } else {
-    croak(`Unknown file type: ${srcPath}`);
+doProcess = function(srcPath, destPath) {
+  if (doForce || readySeen) {
+    return true;
   }
+  if (newerDestFileExists(srcPath, destPath)) {
+    log("   dest exists");
+    return false;
+  }
+  return true;
 };
 
 // ---------------------------------------------------------------------------
@@ -217,12 +233,10 @@ brewCieloFile = function(srcPath) {
   var coffeeCode, destPath;
   // --- cielo => coffee
   destPath = withExt(srcPath, '.coffee');
-  if (newerDestFileExists(srcPath, destPath) && readySeen) {
-    log("   dest exists");
-    return;
+  if (doProcess(srcPath, destPath)) {
+    coffeeCode = brewCielo(slurp(srcPath));
+    output(coffeeCode, srcPath, destPath);
   }
-  coffeeCode = brewCielo(slurp(srcPath));
-  output(coffeeCode, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
@@ -230,63 +244,57 @@ brewCoffeeFile = function(srcPath) {
   var destPath, jsCode;
   // --- coffee => js
   destPath = withExt(srcPath, '.js').replace('_', '');
-  if (newerDestFileExists(srcPath, destPath) && readySeen) {
-    log("   dest exists");
-    return;
+  if (doProcess(srcPath, destPath)) {
+    jsCode = brewCoffee(slurp(srcPath));
+    output(jsCode, srcPath, destPath);
   }
-  jsCode = brewCoffee(slurp(srcPath));
-  output(jsCode, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
 brewStarbucksFile = function(srcPath) {
   var code, content, destPath, hOptions, hParsed;
   destPath = withExt(srcPath, '.svelte').replace('_', '');
-  if (newerDestFileExists(srcPath, destPath) && readySeen) {
-    log("   dest exists");
-    return;
+  if (doProcess(srcPath, destPath)) {
+    content = slurp(srcPath);
+    if (debugStarbucks) {
+      log(sep_eq);
+      log(content);
+      log(sep_eq);
+    }
+    hParsed = pathlib.parse(srcPath);
+    hOptions = {
+      content: content,
+      filename: hParsed.base
+    };
+    code = starbucks(hOptions).code;
+    if (debugStarbucks) {
+      log(code);
+      log(sep_eq);
+    }
+    output(code, srcPath, destPath);
   }
-  content = slurp(srcPath);
-  if (debugStarbucks) {
-    log(sep_eq);
-    log(content);
-    log(sep_eq);
-  }
-  hParsed = pathlib.parse(srcPath);
-  hOptions = {
-    content: content,
-    filename: hParsed.base
-  };
-  code = starbucks(hOptions).code;
-  if (debugStarbucks) {
-    log(code);
-    log(sep_eq);
-  }
-  output(code, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
 brewTamlFile = function(srcPath) {
   var destPath, envDir, hInfo, hParsed, srcDir, stub, tamlCode;
   destPath = withExt(srcPath, '.js').replace('_', '');
-  if (newerDestFileExists(srcPath, destPath) && readySeen) {
-    log("   dest exists");
-    return;
-  }
-  hParsed = pathlib.parse(srcPath);
-  srcDir = mkpath(hParsed.dir);
-  envDir = hPrivEnv.DIR_STORES;
-  assert(envDir, "DIR_STORES is not set!");
-  if (srcDir !== envDir) {
-    log(`   ${srcDir} is not ${envDir}`);
-    return;
-  }
-  hInfo = pathlib.parse(destPath);
-  stub = hInfo.name;
-  tamlCode = slurp(srcPath);
-  output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores';
+  if (doProcess(srcPath, destPath)) {
+    hParsed = pathlib.parse(srcPath);
+    srcDir = mkpath(hParsed.dir);
+    envDir = hPrivEnv.DIR_STORES;
+    assert(envDir, "DIR_STORES is not set!");
+    if (srcDir !== envDir) {
+      log(`   ${srcDir} is not ${envDir}`);
+      return;
+    }
+    hInfo = pathlib.parse(destPath);
+    stub = hInfo.name;
+    tamlCode = slurp(srcPath);
+    output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores';
 
 export let ${stub} = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -306,7 +314,7 @@ parseCmdArgs = function() {
   var hArgs, i, j, len, len1, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n e d f D'),
+    boolean: words('h n e d f x D'),
     unknown: function(opt) {
       return true;
     }
@@ -319,6 +327,7 @@ parseCmdArgs = function() {
     log("   -e just display custom environment variables");
     log("   -d turn on debugging (a lot of output!)");
     log("   -f initially, process all files, even up to date");
+    log("   -x execute *.cielo files on cmd line");
     log("   -D dump input & output from starbucks conversions");
     log("<dir> defaults to current working directory");
     process.exit();
@@ -336,6 +345,9 @@ parseCmdArgs = function() {
   if (hArgs.f) {
     doForce = true;
   }
+  if (hArgs.x) {
+    doExec = true;
+  }
   if (hArgs.D) {
     log("debugging starbucks conversions");
     debugStarbucks = true;
@@ -344,7 +356,11 @@ parseCmdArgs = function() {
     ref = hArgs._;
     for (i = 0, len = ref.length; i < len; i++) {
       path = ref[i];
-      path = mkpath(path); // convert \ to /
+      if (path.indexOf('.') === 0) {
+        path = getFullPath(path); // converts \ to /
+      } else {
+        path = mkpath(path); // convert \ to /
+      }
       if (isDir(path)) {
         assert(!dirRoot, "multiple dirs not allowed");
         dirRoot = path;
