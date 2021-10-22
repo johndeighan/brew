@@ -6,12 +6,12 @@ import fs from 'fs'
 import chokidar from 'chokidar'         # file watcher
 
 import {
-	assert, undef, warn, croak, words, sep_eq,
+	assert, undef, warn, croak, words, sep_eq, nonEmpty,
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
 	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
-	shortenPath,
+	shortenPath, isFile, isDir, isSimpleFileName,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
@@ -21,10 +21,13 @@ import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo, brewCoffee} from './brewCielo.js'
 
 ###
-	cielo [-h | -n | -e | -d ]
+	cielo [-h | -n | -e | -d | -f | -D ] [ <files or directory> ]
 ###
 
 dirRoot = undef
+lFiles = []            # to process individual files
+
+doForce = false        # turn on with -f
 doWatch = true         # turn off with -n
 envOnly = false        # set with -e
 debugStarbucks = false # set with -D
@@ -41,6 +44,12 @@ main = () ->
 	checkDirs()
 	logPrivEnv()
 	if envOnly
+		process.exit()
+
+	if nonEmpty(lFiles)
+		# --- Process only these files
+		for path in lFiles
+			brewFile path
 		process.exit()
 
 	watcher = chokidar.watch(dirRoot, {
@@ -113,6 +122,28 @@ removeFile = (path, ext) ->
 	try
 		fs.unlinkSync fullpath
 		log "   unlink #{filename}"
+	return
+
+# ---------------------------------------------------------------------------
+
+brewFile = (srcPath) ->
+
+	if lMatches = srcPath.match(/\.(?:cielo|coffee|starbucks|taml)$/)
+		log "brew #{shortenPath(srcPath)}"
+		ext = lMatches[0]
+		switch ext
+			when '.cielo'
+				brewCieloFile(srcPath)
+			when '.coffee'
+				brewCoffeeFile(srcPath)
+			when '.starbucks'
+				brewStarbucksFile(srcPath)
+			when '.taml'
+				brewTamlFile(srcPath)
+			else
+				croak "Invalid file extension: '#{ext}'"
+	else
+		croak "Unknown file type: #{srcPath}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -211,7 +242,7 @@ parseCmdArgs = () ->
 
 	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h n e d D'),
+		boolean: words('h n e d f D'),
 		unknown: (opt) ->
 			return true
 		})
@@ -223,6 +254,7 @@ parseCmdArgs = () ->
 		log "   -n process files, don't watch for changes"
 		log "   -e just display custom environment variables"
 		log "   -d turn on debugging (a lot of output!)"
+		log "   -f initially, process all files, even up to date"
 		log "   -D dump input & output from starbucks conversions"
 		log "<dir> defaults to current working directory"
 		process.exit()
@@ -237,19 +269,34 @@ parseCmdArgs = () ->
 		log "extensive debugging on"
 		setDebugging true
 
+	if hArgs.f
+		doForce = true
+
 	if hArgs.D
 		log "debugging starbucks conversions"
 		debugStarbucks = true
 
 	if hArgs._?
-		if hArgs._.length > 1
-			croak "Only one directory path allowed"
-		if hArgs._.length == 1
-			dirRoot = mkpath(hArgs._[0])
-		else if process.env.DIR_ROOT
+		for path in hArgs._
+			path = mkpath(path)    # convert \ to /
+			if isDir(path)
+				assert ! dirRoot, "multiple dirs not allowed"
+				dirRoot = path
+			else if isFile(path)
+				lFiles.push path
+			else
+				croak "Invalid path '#{path}' on command line"
+
+	if ! dirRoot
+		if process.env.DIR_ROOT
 			dirRoot = mkpath(process.env.DIR_ROOT)
 		else
 			dirRoot = process.env.DIR_ROOT = mkpath(process.cwd())
+
+	# --- Convert any simple file names in lFiles to full path
+	for path in lFiles
+		if isSimpleFileName(path)
+			path = mkpath(dirRoot, path)
 	return
 
 # ---------------------------------------------------------------------------

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 ;
 /*
-	cielo [-h | -n | -e | -d ]
+	cielo [-h | -n | -e | -d | -f | -D ] [ <files or directory> ]
 */
-var brewCieloFile, brewCoffeeFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doWatch, envOnly, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doForce, doWatch, envOnly, lFiles, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -19,7 +19,8 @@ import {
   warn,
   croak,
   words,
-  sep_eq
+  sep_eq,
+  nonEmpty
 } from '@jdeighan/coffee-utils';
 
 import {
@@ -33,7 +34,10 @@ import {
   mkpath,
   forEachFile,
   newerDestFileExists,
-  shortenPath
+  shortenPath,
+  isFile,
+  isDir,
+  isSimpleFileName
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -66,6 +70,10 @@ import {
 
 dirRoot = undef;
 
+lFiles = []; // to process individual files
+
+doForce = false; // turn on with -f
+
 doWatch = true; // turn off with -n
 
 envOnly = false; // set with -e
@@ -77,13 +85,21 @@ readySeen = false; // set true when 'ready' event is seen
 
 // ---------------------------------------------------------------------------
 main = function() {
-  var watcher;
+  var i, len, path, watcher;
   parseCmdArgs();
   log(`DIR_ROOT: ${dirRoot}`);
   loadPrivEnvFrom(dirRoot);
   checkDirs();
   logPrivEnv();
   if (envOnly) {
+    process.exit();
+  }
+  if (nonEmpty(lFiles)) {
+// --- Process only these files
+    for (i = 0, len = lFiles.length; i < len; i++) {
+      path = lFiles[i];
+      brewFile(path);
+    }
     process.exit();
   }
   watcher = chokidar.watch(dirRoot, {
@@ -167,6 +183,33 @@ removeFile = function(path, ext) {
     fs.unlinkSync(fullpath);
     log(`   unlink ${filename}`);
   } catch (error) {}
+};
+
+// ---------------------------------------------------------------------------
+brewFile = function(srcPath) {
+  var ext, lMatches;
+  if (lMatches = srcPath.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
+    log(`brew ${shortenPath(srcPath)}`);
+    ext = lMatches[0];
+    switch (ext) {
+      case '.cielo':
+        brewCieloFile(srcPath);
+        break;
+      case '.coffee':
+        brewCoffeeFile(srcPath);
+        break;
+      case '.starbucks':
+        brewStarbucksFile(srcPath);
+        break;
+      case '.taml':
+        brewTamlFile(srcPath);
+        break;
+      default:
+        croak(`Invalid file extension: '${ext}'`);
+    }
+  } else {
+    croak(`Unknown file type: ${srcPath}`);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -260,10 +303,10 @@ output = function(code, srcPath, destPath) {
 
 // ---------------------------------------------------------------------------
 parseCmdArgs = function() {
-  var hArgs;
+  var hArgs, i, j, len, len1, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n e d D'),
+    boolean: words('h n e d f D'),
     unknown: function(opt) {
       return true;
     }
@@ -275,6 +318,7 @@ parseCmdArgs = function() {
     log("   -n process files, don't watch for changes");
     log("   -e just display custom environment variables");
     log("   -d turn on debugging (a lot of output!)");
+    log("   -f initially, process all files, even up to date");
     log("   -D dump input & output from starbucks conversions");
     log("<dir> defaults to current working directory");
     process.exit();
@@ -289,20 +333,40 @@ parseCmdArgs = function() {
     log("extensive debugging on");
     setDebugging(true);
   }
+  if (hArgs.f) {
+    doForce = true;
+  }
   if (hArgs.D) {
     log("debugging starbucks conversions");
     debugStarbucks = true;
   }
   if (hArgs._ != null) {
-    if (hArgs._.length > 1) {
-      croak("Only one directory path allowed");
+    ref = hArgs._;
+    for (i = 0, len = ref.length; i < len; i++) {
+      path = ref[i];
+      path = mkpath(path); // convert \ to /
+      if (isDir(path)) {
+        assert(!dirRoot, "multiple dirs not allowed");
+        dirRoot = path;
+      } else if (isFile(path)) {
+        lFiles.push(path);
+      } else {
+        croak(`Invalid path '${path}' on command line`);
+      }
     }
-    if (hArgs._.length === 1) {
-      dirRoot = mkpath(hArgs._[0]);
-    } else if (process.env.DIR_ROOT) {
+  }
+  if (!dirRoot) {
+    if (process.env.DIR_ROOT) {
       dirRoot = mkpath(process.env.DIR_ROOT);
     } else {
       dirRoot = process.env.DIR_ROOT = mkpath(process.cwd());
+    }
+  }
+// --- Convert any simple file names in lFiles to full path
+  for (j = 0, len1 = lFiles.length; j < len1; j++) {
+    path = lFiles[j];
+    if (isSimpleFileName(path)) {
+      path = mkpath(dirRoot, path);
     }
   }
 };

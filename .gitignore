@@ -4,3 +4,4 @@ test/stores/*.js
 test/components/*.svelte
 test/lib/*.coffee
 test/lib/*.js
+temp.*
