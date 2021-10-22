@@ -16,6 +16,7 @@ import chokidar from 'chokidar';
 import {
   assert,
   undef,
+  warn,
   croak,
   words,
   sep_eq
