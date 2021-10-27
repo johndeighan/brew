@@ -127,13 +127,13 @@ cieloTester.equal 113, """
 # --- handle HEREDOC
 
 cieloTester.equal 127, """
-		if (x=='<<<')
+		if (x==<<<)
 			abc
 
 			log "line {{LINE}} in {{FILE}}"
 		""", """
 		import {log} from '@jdeighan/coffee-utils/log'
-		if (x=='abc')
+		if (x=="abc")
 			log "line 4 in unit test"
 		"""
 
@@ -155,27 +155,26 @@ cieloTester.equal 141, """
 # --- NOTE: the following 2 tests are really the same thing
 
 cieloTester.equal 155, """
-		if (x=="<<<")
+		if (x==<<<)
 			abc
 			def
 
 			log "line {{LINE}} in {{FILE}}"
 		""", """
 		import {log} from '@jdeighan/coffee-utils/log'
-		if (x=="abc\ndef")
+		if (x=="abc\\ndef")
 			log "line 5 in unit test"
 		"""
 
 cieloTester.equal 167, """
-		if (x=="<<<")
+		if (x==<<<)
 			abc
 			def
 
 			log "line {{LINE}} in {{FILE}}"
 		""", """
 		import {log} from '@jdeighan/coffee-utils/log'
-		if (x=="abc
-def")
+		if (x=="abc\\ndef")
 			log "line 5 in unit test"
 		"""
 
