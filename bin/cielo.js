@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doProcess, doWatch, envOnly, lFiles, main, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, envOnly, lFiles, main, needsUpdate, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -152,12 +152,10 @@ main = function() {
       var lMatches;
       if (event === 'ready') {
         readySeen = true;
-        if (doDebug) {
-          if (doWatch) {
-            log("...watching for further file changes");
-          } else {
-            log("...not watching for further file changes");
-          }
+        if (doWatch) {
+          log("...watching for further file changes");
+        } else {
+          log("...not watching for further file changes");
         }
         return;
       }
@@ -253,7 +251,7 @@ removeFile = function(path, ext) {
 };
 
 // ---------------------------------------------------------------------------
-doProcess = function(srcPath, destPath) {
+needsUpdate = function(srcPath, destPath) {
   if (doForce || readySeen) {
     return true;
   }
@@ -271,7 +269,7 @@ brewCieloFile = function(srcPath) {
   var coffeeCode, destPath;
   // --- cielo => coffee
   destPath = withExt(srcPath, '.coffee');
-  if (doProcess(srcPath, destPath)) {
+  if (needsUpdate(srcPath, destPath)) {
     coffeeCode = brewCielo(slurp(srcPath));
     output(coffeeCode, srcPath, destPath);
   }
@@ -282,7 +280,7 @@ brewCoffeeFile = function(srcPath) {
   var destPath, jsCode;
   // --- coffee => js
   destPath = withExt(srcPath, '.js').replace('_', '');
-  if (doProcess(srcPath, destPath)) {
+  if (needsUpdate(srcPath, destPath)) {
     jsCode = brewCoffee(slurp(srcPath));
     output(jsCode, srcPath, destPath);
   }
@@ -292,7 +290,7 @@ brewCoffeeFile = function(srcPath) {
 brewStarbucksFile = function(srcPath) {
   var code, content, destPath, hOptions, hParsed;
   destPath = withExt(srcPath, '.svelte').replace('_', '');
-  if (doProcess(srcPath, destPath)) {
+  if (needsUpdate(srcPath, destPath)) {
     content = slurp(srcPath);
     if (debugStarbucks) {
       log(sep_eq);
@@ -315,19 +313,9 @@ brewStarbucksFile = function(srcPath) {
 
 // ---------------------------------------------------------------------------
 brewTamlFile = function(srcPath) {
-  var destPath, envDir, hInfo, hParsed, srcDir, stub, tamlCode;
+  var destPath, hInfo, stub, tamlCode;
   destPath = withExt(srcPath, '.js').replace('_', '');
-  if (doProcess(srcPath, destPath)) {
-    hParsed = pathlib.parse(srcPath);
-    srcDir = mkpath(hParsed.dir);
-    envDir = hPrivEnv.DIR_STORES;
-    assert(envDir, "DIR_STORES is not set!");
-    if (srcDir !== envDir) {
-      if (doDebug) {
-        log(`   SKIPPING: ${srcDir} is not ${envDir}`);
-      }
-      return;
-    }
+  if (needsUpdate(srcPath, destPath)) {
     hInfo = pathlib.parse(destPath);
     stub = hInfo.name;
     tamlCode = slurp(srcPath);

@@ -94,11 +94,10 @@ main = () ->
 
 			if event == 'ready'
 				readySeen = true
-				if doDebug
-					if doWatch
-						log "...watching for further file changes"
-					else
-						log "...not watching for further file changes"
+				if doWatch
+					log "...watching for further file changes"
+				else
+					log "...not watching for further file changes"
 				return
 
 			if path.match(/node_modules/)
@@ -175,7 +174,7 @@ removeFile = (path, ext) ->
 
 # ---------------------------------------------------------------------------
 
-doProcess = (srcPath, destPath) ->
+needsUpdate = (srcPath, destPath) ->
 
 	if doForce || readySeen
 		return true
@@ -191,7 +190,7 @@ brewCieloFile = (srcPath) ->
 	# --- cielo => coffee
 
 	destPath = withExt(srcPath, '.coffee')
-	if doProcess(srcPath, destPath)
+	if needsUpdate(srcPath, destPath)
 		coffeeCode = brewCielo(slurp(srcPath))
 		output coffeeCode, srcPath, destPath
 	return
@@ -202,7 +201,7 @@ brewCoffeeFile = (srcPath) ->
 	# --- coffee => js
 
 	destPath = withExt(srcPath, '.js').replace('_', '')
-	if doProcess(srcPath, destPath)
+	if needsUpdate(srcPath, destPath)
 		jsCode = brewCoffee(slurp(srcPath))
 		output jsCode, srcPath, destPath
 	return
@@ -212,7 +211,7 @@ brewCoffeeFile = (srcPath) ->
 brewStarbucksFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.svelte').replace('_', '')
-	if doProcess(srcPath, destPath)
+	if needsUpdate(srcPath, destPath)
 		content = slurp(srcPath)
 		if debugStarbucks
 			log sep_eq
@@ -236,16 +235,7 @@ brewStarbucksFile = (srcPath) ->
 brewTamlFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.js').replace('_', '')
-	if doProcess(srcPath, destPath)
-		hParsed = pathlib.parse(srcPath)
-		srcDir = mkpath(hParsed.dir)
-		envDir = hPrivEnv.DIR_STORES
-		assert envDir, "DIR_STORES is not set!"
-		if (srcDir != envDir)
-			if doDebug
-				log "   SKIPPING: #{srcDir} is not #{envDir}"
-			return
-
+	if needsUpdate(srcPath, destPath)
 		hInfo = pathlib.parse(destPath)
 		stub = hInfo.name
 
