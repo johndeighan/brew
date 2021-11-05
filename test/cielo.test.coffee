@@ -198,3 +198,16 @@ cieloTester.equal 182, """
 			print "File does not exist"
 		"""
 # ---------------------------------------------------------------------------
+# --- should allow a trailing backslash
+
+cieloTester.equal 60, """
+		if (x==42) \
+				or (x==33)
+			console.log x
+		""", """
+		if (x==42) \
+				or (x==33)
+			console.log x
+		"""
+
+# ---------------------------------------------------------------------------

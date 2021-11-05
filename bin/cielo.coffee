@@ -164,7 +164,7 @@ brewCieloFile = (srcPath) ->
 brewCoffeeFile = (srcPath) ->
 	# --- coffee => js
 
-	destPath = withExt(srcPath, '.js').replace('_', '')
+	destPath = withExt(srcPath, '.js', {removeLeadingUnderScore:true})
 	if needsUpdate(srcPath, destPath)
 		jsCode = brewCoffee(slurp(srcPath))
 		output jsCode, srcPath, destPath
@@ -174,7 +174,7 @@ brewCoffeeFile = (srcPath) ->
 
 brewStarbucksFile = (srcPath) ->
 
-	destPath = withExt(srcPath, '.svelte').replace('_', '')
+	destPath = withExt(srcPath, '.svelte', {removeLeadingUnderScore:true})
 	if needsUpdate(srcPath, destPath)
 		content = slurp(srcPath)
 		if debugStarbucks
@@ -198,7 +198,7 @@ brewStarbucksFile = (srcPath) ->
 
 brewTamlFile = (srcPath) ->
 
-	destPath = withExt(srcPath, '.js').replace('_', '')
+	destPath = withExt(srcPath, '.js', {removeLeadingUnderScore:true})
 	if needsUpdate(srcPath, destPath)
 		hInfo = pathlib.parse(destPath)
 		stub = hInfo.name
@@ -223,23 +223,24 @@ unlinkRelatedFiles = (path, ext) ->
 			if path.indexOf('_') == -1
 				removeFile(path, '.js')
 			else
-				removeFile(path.replace('_',''), '.js')
+				removeFile(path, '.js', {removeLeadingUnderScore:true})
 		when '.starbucks'
 			if path.indexOf('_') == -1
 				removeFile(path, '.svelte')
 			else
-				removeFile(path.replace('_',''), '.svelte')
+				removeFile(path, '.svelte', {removeLeadingUnderScore:true})
 		else
 			croak "Invalid file extension: '#{ext}'"
 	return
 
 # ---------------------------------------------------------------------------
 
-removeFile = (path, ext) ->
+removeFile = (path, ext, hOptions={}) ->
 	# --- file 'path' was removed
 	#     remove same file, but with ext 'ext'
+	#     valid options: same as withExt()
 
-	fullpath = withExt(path, ext)
+	fullpath = withExt(path, ext, hOptions)
 	try
 		if ! quiet
 			log "   unlink #{filename}"

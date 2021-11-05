@@ -232,7 +232,9 @@ brewCieloFile = function(srcPath) {
 brewCoffeeFile = function(srcPath) {
   var destPath, jsCode;
   // --- coffee => js
-  destPath = withExt(srcPath, '.js').replace('_', '');
+  destPath = withExt(srcPath, '.js', {
+    removeLeadingUnderScore: true
+  });
   if (needsUpdate(srcPath, destPath)) {
     jsCode = brewCoffee(slurp(srcPath));
     output(jsCode, srcPath, destPath);
@@ -242,7 +244,9 @@ brewCoffeeFile = function(srcPath) {
 // ---------------------------------------------------------------------------
 brewStarbucksFile = function(srcPath) {
   var code, content, destPath, hOptions, hParsed;
-  destPath = withExt(srcPath, '.svelte').replace('_', '');
+  destPath = withExt(srcPath, '.svelte', {
+    removeLeadingUnderScore: true
+  });
   if (needsUpdate(srcPath, destPath)) {
     content = slurp(srcPath);
     if (debugStarbucks) {
@@ -267,7 +271,9 @@ brewStarbucksFile = function(srcPath) {
 // ---------------------------------------------------------------------------
 brewTamlFile = function(srcPath) {
   var destPath, hInfo, stub, tamlCode;
-  destPath = withExt(srcPath, '.js').replace('_', '');
+  destPath = withExt(srcPath, '.js', {
+    removeLeadingUnderScore: true
+  });
   if (needsUpdate(srcPath, destPath)) {
     hInfo = pathlib.parse(destPath);
     stub = hInfo.name;
@@ -290,14 +296,18 @@ unlinkRelatedFiles = function(path, ext) {
       if (path.indexOf('_') === -1) {
         removeFile(path, '.js');
       } else {
-        removeFile(path.replace('_', ''), '.js');
+        removeFile(path, '.js', {
+          removeLeadingUnderScore: true
+        });
       }
       break;
     case '.starbucks':
       if (path.indexOf('_') === -1) {
         removeFile(path, '.svelte');
       } else {
-        removeFile(path.replace('_', ''), '.svelte');
+        removeFile(path, '.svelte', {
+          removeLeadingUnderScore: true
+        });
       }
       break;
     default:
@@ -306,11 +316,12 @@ unlinkRelatedFiles = function(path, ext) {
 };
 
 // ---------------------------------------------------------------------------
-removeFile = function(path, ext) {
+removeFile = function(path, ext, hOptions = {}) {
   var err, fullpath;
   // --- file 'path' was removed
   //     remove same file, but with ext 'ext'
-  fullpath = withExt(path, ext);
+  //     valid options: same as withExt()
+  fullpath = withExt(path, ext, hOptions);
   try {
     if (!quiet) {
       log(`   unlink ${filename}`);
