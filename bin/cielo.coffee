@@ -50,9 +50,8 @@ main = () ->
 		checkDirs()
 		logPrivEnv()
 		process.exit()
-	else
-		checkDirs()
 
+	checkDirs()
 	if doDebug
 		logPrivEnv()
 
@@ -85,6 +84,7 @@ main = () ->
 					else
 						log stdout
 					)
+		log "#{nExec} files processed"
 		return   # --- DONE
 
 	watcher = chokidar.watch(dirRoot, {
@@ -115,6 +115,7 @@ main = () ->
 			else
 				brewFile path
 
+	log "DONE"
 	return
 
 # ---------------------------------------------------------------------------
@@ -141,50 +142,13 @@ brewFile = (path) ->
 
 # ---------------------------------------------------------------------------
 
-unlinkRelatedFiles = (path, ext) ->
-	# --- file 'path' was removed
-
-	switch ext
-		when '.cielo'
-			removeFile(path, '.coffee')
-		when '.coffee', '.taml'
-			if path.indexOf('_') == -1
-				removeFile(path, '.js')
-			else
-				removeFile(path.replace('_',''), '.js')
-		when '.starbucks'
-			if path.indexOf('_') == -1
-				removeFile(path, '.svelte')
-			else
-				removeFile(path.replace('_',''), '.svelte')
-		else
-			croak "Invalid file extension: '#{ext}'"
-	return
-
-# ---------------------------------------------------------------------------
-
-removeFile = (path, ext) ->
-	# --- file 'path' was removed
-	#     remove same file, but with ext 'ext'
-
-	fullpath = withExt(path, ext)
-	try
-		if ! quiet
-			log "   unlink #{filename}"
-		fs.unlinkSync fullpath
-	catch err
-		log "   FAILED: #{err.message}"
-	return
-
-# ---------------------------------------------------------------------------
-
 needsUpdate = (srcPath, destPath) ->
 
 	if doForce || readySeen
 		return true
 	if newerDestFileExists(srcPath, destPath)
-		if doDebug || readySeen
-			log "   dest exists"
+		if ! quiet
+			log "   UP TO DATE"
 		return false
 	return true
 
@@ -253,14 +217,65 @@ brewTamlFile = (srcPath) ->
 
 # ---------------------------------------------------------------------------
 
+unlinkRelatedFiles = (path, ext) ->
+	# --- file 'path' was removed
+
+	switch ext
+		when '.cielo'
+			removeFile(path, '.coffee')
+		when '.coffee', '.taml'
+			if path.indexOf('_') == -1
+				removeFile(path, '.js')
+			else
+				removeFile(path.replace('_',''), '.js')
+		when '.starbucks'
+			if path.indexOf('_') == -1
+				removeFile(path, '.svelte')
+			else
+				removeFile(path.replace('_',''), '.svelte')
+		else
+			croak "Invalid file extension: '#{ext}'"
+	return
+
+# ---------------------------------------------------------------------------
+
+removeFile = (path, ext) ->
+	# --- file 'path' was removed
+	#     remove same file, but with ext 'ext'
+
+	fullpath = withExt(path, ext)
+	try
+		if ! quiet
+			log "   unlink #{filename}"
+		fs.unlinkSync fullpath
+	catch err
+		log "   FAILED: #{err.message}"
+	return
+
+# ---------------------------------------------------------------------------
+
 output = (code, srcPath, destPath) ->
 
 	try
 		barf destPath, code
 	catch err
 		log "ERROR: #{err.message}"
-	if doDebug || readySeen
+	if ! quiet
 		log "   #{shortenPath(srcPath)} => #{shortenPath(destPath)}"
+	return
+
+# ---------------------------------------------------------------------------
+
+dumpCmdArgs = () ->
+
+	log "CMD ARGS:"
+	log "   doWatch = #{hArgs.w}"
+	log "   envOnly = #{hArgs.e}"
+	log "   doDebug = #{hArgs.d}"
+	log "   quiet = #{hArgs.q}"
+	log "   doForce = #{hArgs.f}"
+	log "   doExec = #{hArgs.x}"
+	log "   debugStarbucks = #{hArgs.s}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -324,6 +339,9 @@ parseCmdArgs = () ->
 	for path in lFiles
 		if isSimpleFileName(path)
 			path = mkpath(dirRoot, path)
+
+	if ! quiet
+		dumpCmdArgs()
 	return
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, envOnly, lFiles, main, needsUpdate, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpCmdArgs, envOnly, lFiles, main, needsUpdate, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -107,9 +107,8 @@ main = function() {
     checkDirs();
     logPrivEnv();
     process.exit();
-  } else {
-    checkDirs();
   }
+  checkDirs();
   if (doDebug) {
     logPrivEnv();
   }
@@ -139,11 +138,12 @@ main = function() {
           if (err) {
             return log(`exec() failed: ${err.message}`);
           } else {
-            return log(stdout); // --- DONE
+            return log(stdout);
           }
         });
       }
     }
+    log(`${nExec} files processed`);
     return;
   }
   watcher = chokidar.watch(dirRoot, {
@@ -178,6 +178,7 @@ main = function() {
       }
     }
   });
+  log("DONE");
 };
 
 // ---------------------------------------------------------------------------
@@ -210,57 +211,13 @@ brewFile = function(path) {
 };
 
 // ---------------------------------------------------------------------------
-unlinkRelatedFiles = function(path, ext) {
-  // --- file 'path' was removed
-  switch (ext) {
-    case '.cielo':
-      removeFile(path, '.coffee');
-      break;
-    case '.coffee':
-    case '.taml':
-      if (path.indexOf('_') === -1) {
-        removeFile(path, '.js');
-      } else {
-        removeFile(path.replace('_', ''), '.js');
-      }
-      break;
-    case '.starbucks':
-      if (path.indexOf('_') === -1) {
-        removeFile(path, '.svelte');
-      } else {
-        removeFile(path.replace('_', ''), '.svelte');
-      }
-      break;
-    default:
-      croak(`Invalid file extension: '${ext}'`);
-  }
-};
-
-// ---------------------------------------------------------------------------
-removeFile = function(path, ext) {
-  var err, fullpath;
-  // --- file 'path' was removed
-  //     remove same file, but with ext 'ext'
-  fullpath = withExt(path, ext);
-  try {
-    if (!quiet) {
-      log(`   unlink ${filename}`);
-    }
-    fs.unlinkSync(fullpath);
-  } catch (error) {
-    err = error;
-    log(`   FAILED: ${err.message}`);
-  }
-};
-
-// ---------------------------------------------------------------------------
 needsUpdate = function(srcPath, destPath) {
   if (doForce || readySeen) {
     return true;
   }
   if (newerDestFileExists(srcPath, destPath)) {
-    if (doDebug || readySeen) {
-      log("   dest exists");
+    if (!quiet) {
+      log("   UP TO DATE");
     }
     return false;
   }
@@ -329,6 +286,50 @@ export let ${stub} = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath);
 };
 
 // ---------------------------------------------------------------------------
+unlinkRelatedFiles = function(path, ext) {
+  // --- file 'path' was removed
+  switch (ext) {
+    case '.cielo':
+      removeFile(path, '.coffee');
+      break;
+    case '.coffee':
+    case '.taml':
+      if (path.indexOf('_') === -1) {
+        removeFile(path, '.js');
+      } else {
+        removeFile(path.replace('_', ''), '.js');
+      }
+      break;
+    case '.starbucks':
+      if (path.indexOf('_') === -1) {
+        removeFile(path, '.svelte');
+      } else {
+        removeFile(path.replace('_', ''), '.svelte');
+      }
+      break;
+    default:
+      croak(`Invalid file extension: '${ext}'`);
+  }
+};
+
+// ---------------------------------------------------------------------------
+removeFile = function(path, ext) {
+  var err, fullpath;
+  // --- file 'path' was removed
+  //     remove same file, but with ext 'ext'
+  fullpath = withExt(path, ext);
+  try {
+    if (!quiet) {
+      log(`   unlink ${filename}`);
+    }
+    fs.unlinkSync(fullpath);
+  } catch (error) {
+    err = error;
+    log(`   FAILED: ${err.message}`);
+  }
+};
+
+// ---------------------------------------------------------------------------
 output = function(code, srcPath, destPath) {
   var err;
   try {
@@ -337,9 +338,21 @@ output = function(code, srcPath, destPath) {
     err = error;
     log(`ERROR: ${err.message}`);
   }
-  if (doDebug || readySeen) {
+  if (!quiet) {
     log(`   ${shortenPath(srcPath)} => ${shortenPath(destPath)}`);
   }
+};
+
+// ---------------------------------------------------------------------------
+dumpCmdArgs = function() {
+  log("CMD ARGS:");
+  log(`   doWatch = ${hArgs.w}`);
+  log(`   envOnly = ${hArgs.e}`);
+  log(`   doDebug = ${hArgs.d}`);
+  log(`   quiet = ${hArgs.q}`);
+  log(`   doForce = ${hArgs.f}`);
+  log(`   doExec = ${hArgs.x}`);
+  log(`   debugStarbucks = ${hArgs.s}`);
 };
 
 // ---------------------------------------------------------------------------
@@ -409,6 +422,9 @@ parseCmdArgs = function() {
     if (isSimpleFileName(path)) {
       path = mkpath(dirRoot, path);
     }
+  }
+  if (!quiet) {
+    dumpCmdArgs();
   }
 };
 
