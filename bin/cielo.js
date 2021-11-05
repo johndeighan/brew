@@ -424,18 +424,13 @@ parseCmdArgs = function() {
     }
   }
   if (!dirRoot) {
-    if (process.env.DIR_ROOT) {
-      dirRoot = mkpath(process.env.DIR_ROOT);
-      if (!quiet) {
-        log(`DIR_ROOT: ${dirRoot} (from env var)`);
-      }
-    } else {
-      dirRoot = process.env.DIR_ROOT = mkpath(process.cwd());
-      if (!quiet) {
-        log(`DIR_ROOT: ${dirRoot} (from cwd())`);
-      }
+    dirRoot = mkpath(process.cwd());
+    if (!quiet) {
+      log(`DIR_ROOT: ${dirRoot} (from cwd())`);
     }
   }
+  // --- set env var DIR_ROOT
+  process.env.DIR_ROOT = dirRoot;
 // --- Convert any simple file names in lFiles to full path
   for (j = 0, len1 = lFiles.length; j < len1; j++) {
     path = lFiles[j];
