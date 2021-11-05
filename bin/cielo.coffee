@@ -35,6 +35,8 @@ doExec = false         # execute *.js file for *.cielo files on cmd line
 debugStarbucks = false # set with -s
 
 readySeen = false      # set true when 'ready' event is seen
+nProcessed = 0
+nExecuted = 0
 
 # ---------------------------------------------------------------------------
 
@@ -55,7 +57,6 @@ main = () ->
 
 	if nonEmpty(lFiles)
 		# --- Process only these files
-		nExec = 0           # --- number of files executed
 		for path in lFiles
 			if ! quiet
 				log "BREW #{shortenPath(path)}"
@@ -72,7 +73,7 @@ main = () ->
 				jsPath = withExt(path, '.js')
 
 				# --- add separator line for 2nd and later executions
-				if (nExec > 0)
+				if (nExecuted > 0)
 					log sep_eq
 
 				if doDebug
@@ -84,8 +85,9 @@ main = () ->
 					else
 						log stdout
 					)
-		if ! quiet && doExec
-			log "#{nExec} files executed"
+				nExecuted += 1
+
+		dumpStats()
 		return   # --- DONE
 
 	watcher = chokidar.watch(dirRoot, {
@@ -99,6 +101,7 @@ main = () ->
 				log "...watching for further file changes"
 			else
 				log "...not watching for further file changes"
+				dumpStats()
 		readySeen = true
 
 	watcher.on 'all', (event, path) ->
@@ -117,6 +120,17 @@ main = () ->
 			else
 				brewFile path
 
+	return
+
+# ---------------------------------------------------------------------------
+
+dumpStats = () ->
+
+	if quiet
+		return
+	log "#{nProcessed} files processed"
+	if doExec
+		log "#{nExecuted} files executed"
 	return
 
 # ---------------------------------------------------------------------------
@@ -258,6 +272,7 @@ output = (code, srcPath, destPath) ->
 
 	try
 		barf destPath, code
+		nProcessed += 1
 	catch err
 		log "ERROR: #{err.message}"
 	if ! quiet

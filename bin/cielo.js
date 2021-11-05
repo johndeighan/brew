@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, envOnly, lFiles, main, needsUpdate, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -93,10 +93,13 @@ debugStarbucks = false; // set with -s
 
 readySeen = false; // set true when 'ready' event is seen
 
+nProcessed = 0;
+
+nExecuted = 0;
 
 // ---------------------------------------------------------------------------
 main = function() {
-  var ext, i, jsPath, len, nExec, path, watcher;
+  var ext, i, jsPath, len, path, watcher;
   parseCmdArgs();
   loadPrivEnvFrom(dirRoot);
   if (envOnly) {
@@ -110,8 +113,7 @@ main = function() {
     logPrivEnv();
   }
   if (nonEmpty(lFiles)) {
-    // --- Process only these files
-    nExec = 0; // --- number of files executed
+// --- Process only these files
     for (i = 0, len = lFiles.length; i < len; i++) {
       path = lFiles[i];
       if (!quiet) {
@@ -128,7 +130,7 @@ main = function() {
         // --- Execute the corresponding *.js file
         jsPath = withExt(path, '.js');
         // --- add separator line for 2nd and later executions
-        if (nExec > 0) {
+        if (nExecuted > 0) {
           log(sep_eq);
         }
         if (doDebug) {
@@ -141,11 +143,10 @@ main = function() {
             return log(stdout);
           }
         });
+        nExecuted += 1;
       }
     }
-    if (!quiet && doExec) {
-      log(`${nExec} files executed`);
-    }
+    dumpStats(); // --- DONE
     return;
   }
   watcher = chokidar.watch(dirRoot, {
@@ -157,6 +158,7 @@ main = function() {
         log("...watching for further file changes");
       } else {
         log("...not watching for further file changes");
+        dumpStats();
       }
     }
     return readySeen = true;
@@ -180,6 +182,17 @@ main = function() {
       }
     }
   });
+};
+
+// ---------------------------------------------------------------------------
+dumpStats = function() {
+  if (quiet) {
+    return;
+  }
+  log(`${nProcessed} files processed`);
+  if (doExec) {
+    log(`${nExecuted} files executed`);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -343,6 +356,7 @@ output = function(code, srcPath, destPath) {
   var err;
   try {
     barf(destPath, code);
+    nProcessed += 1;
   } catch (error) {
     err = error;
     log(`ERROR: ${err.message}`);
