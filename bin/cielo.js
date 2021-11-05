@@ -346,13 +346,13 @@ output = function(code, srcPath, destPath) {
 // ---------------------------------------------------------------------------
 dumpCmdArgs = function() {
   log("CMD ARGS:");
-  log(`   doWatch = ${hArgs.w}`);
-  log(`   envOnly = ${hArgs.e}`);
-  log(`   doDebug = ${hArgs.d}`);
-  log(`   quiet = ${hArgs.q}`);
-  log(`   doForce = ${hArgs.f}`);
-  log(`   doExec = ${hArgs.x}`);
-  log(`   debugStarbucks = ${hArgs.s}`);
+  log(`   doWatch = ${doWatch}`);
+  log(`   envOnly = ${envOnly}`);
+  log(`   doDebug = ${doDebug}`);
+  log(`   quiet = ${quiet}`);
+  log(`   doForce = ${doForce}`);
+  log(`   doExec = ${doExec}`);
+  log(`   debugStarbucks = ${debugStarbucks}`);
 };
 
 // ---------------------------------------------------------------------------
