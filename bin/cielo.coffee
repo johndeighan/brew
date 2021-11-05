@@ -89,10 +89,9 @@ main = () ->
 		persistent: doWatch,
 		})
 
-	watcher.on 'ready', (event, path) ->
+	watcher.on 'ready', () ->
 
 		if ! quiet
-			log "#{event}"
 			if doWatch
 				log "...watching for further file changes"
 			else
@@ -257,7 +256,7 @@ output = (code, srcPath, destPath) ->
 	catch err
 		log "ERROR: #{err.message}"
 	if ! quiet
-		log "   #{shortenPath(srcPath)} => #{shortenPath(destPath)}"
+		log "   => #{shortenPath(destPath)}"
 	return
 
 # ---------------------------------------------------------------------------
