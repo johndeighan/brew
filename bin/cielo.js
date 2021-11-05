@@ -139,42 +139,45 @@ main = function() {
           if (err) {
             return log(`exec() failed: ${err.message}`);
           } else {
-            return log(stdout);
+            return log(stdout); // --- DONE
           }
         });
       }
     }
-  } else {
-    watcher = chokidar.watch(dirRoot, {
-      persistent: doWatch
-    });
-    watcher.on('all', function(event, path) {
-      var lMatches;
-      if (event === 'ready') {
-        readySeen = true;
+    return;
+  }
+  watcher.on('all', function(event, path) {
+    var lMatches;
+    if (event === 'ready') {
+      if (!quiet) {
+        log(`${event}`);
         if (doWatch) {
           log("...watching for further file changes");
         } else {
           log("...not watching for further file changes");
         }
-        return;
       }
-      if (path.match(/node_modules/)) {
-        return;
+      readySeen = true;
+      return;
+    }
+    if (path.match(/node_modules/)) {
+      return;
+    }
+    if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
+      if (!quiet) {
+        log(`${event} ${shortenPath(path)}`);
       }
-      if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
-        if (!quiet) {
-          log(`${event} ${shortenPath(path)}`);
-        }
-        ext = lMatches[0];
-        if (event === 'unlink') {
-          return unlinkRelatedFiles(path, ext);
-        } else {
-          return brewFile(path);
-        }
+      ext = lMatches[0];
+      if (event === 'unlink') {
+        return unlinkRelatedFiles(path, ext);
+      } else {
+        return brewFile(path);
       }
-    });
-  }
+    }
+  });
+  watcher = chokidar.watch(dirRoot, {
+    persistent: doWatch
+  });
 };
 
 // ---------------------------------------------------------------------------

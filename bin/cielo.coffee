@@ -85,32 +85,36 @@ main = () ->
 					else
 						log stdout
 					)
-	else
-		watcher = chokidar.watch(dirRoot, {
-			persistent: doWatch,
-			})
+		return   # --- DONE
 
-		watcher.on 'all', (event, path) ->
+	watcher.on 'all', (event, path) ->
 
-			if event == 'ready'
-				readySeen = true
+		if event == 'ready'
+			if ! quiet
+				log "#{event}"
 				if doWatch
 					log "...watching for further file changes"
 				else
 					log "...not watching for further file changes"
-				return
+			readySeen = true
+			return
 
-			if path.match(/node_modules/)
-				return
+		if path.match(/node_modules/)
+			return
 
-			if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
-				if ! quiet
-					log "#{event} #{shortenPath(path)}"
-				ext = lMatches[0]
-				if event == 'unlink'
-					unlinkRelatedFiles(path, ext)
-				else
-					brewFile path
+		if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
+			if ! quiet
+				log "#{event} #{shortenPath(path)}"
+			ext = lMatches[0]
+			if event == 'unlink'
+				unlinkRelatedFiles(path, ext)
+			else
+				brewFile path
+
+	watcher = chokidar.watch(dirRoot, {
+		persistent: doWatch,
+		})
+
 	return
 
 # ---------------------------------------------------------------------------
