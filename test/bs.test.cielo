@@ -1,0 +1,6 @@
+import {UnitTester} from '@jdeighan/coffee-utils/test'
+
+simple = new UnitTester()
+simple.equal 39, pathTo('test.txt', dir), \
+		"#{dir}/subdirectory/test.txt"
+
