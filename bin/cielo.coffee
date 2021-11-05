@@ -29,6 +29,7 @@ lFiles = []            # to process individual files
 doWatch = false        # set with -w
 envOnly = false        # set with -e
 doDebug = false        # set with -d
+quiet   = false        # set with -q
 doForce = false        # set with -f
 doExec = false         # execute *.js file for *.cielo files on cmd line
 debugStarbucks = false # set with -s
@@ -40,7 +41,7 @@ readySeen = false      # set true when 'ready' event is seen
 main = () ->
 
 	parseCmdArgs()
-	if doDebug
+	if ! quiet
 		log "DIR_ROOT: #{dirRoot}"
 
 	loadPrivEnvFrom(dirRoot)
@@ -104,7 +105,7 @@ main = () ->
 				return
 
 			if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
-				if doDebug || readySeen
+				if ! quiet
 					log "#{event} #{shortenPath(path)}"
 				ext = lMatches[0]
 				if event == 'unlink'
@@ -117,19 +118,22 @@ main = () ->
 
 brewFile = (path) ->
 
-	if doDebug || readySeen
-		log "brew #{shortenPath(path)}"
-	switch fileExt(path)
-		when '.cielo'
-			brewCieloFile path
-		when '.coffee'
-			brewCoffeeFile path
-		when '.starbucks'
-			brewStarbucksFile path
-		when '.taml'
-			brewTamlFile path
-		else
-			croak "Unknown file type: #{path}"
+	if ! quiet
+		log "   brew #{shortenPath(path)}"
+	try
+		switch fileExt(path)
+			when '.cielo'
+				brewCieloFile path
+			when '.coffee'
+				brewCoffeeFile path
+			when '.starbucks'
+				brewStarbucksFile path
+			when '.taml'
+				brewTamlFile path
+			else
+				croak "Unknown file type: #{path}"
+	catch err
+		log "   FAILED: #{err.message}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -162,9 +166,11 @@ removeFile = (path, ext) ->
 
 	fullpath = withExt(path, ext)
 	try
-		fs.unlinkSync fullpath
-		if doDebug || readySeen
+		if ! quiet
 			log "   unlink #{filename}"
+		fs.unlinkSync fullpath
+	catch err
+		log "   FAILED: #{err.message}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -269,7 +275,7 @@ parseCmdArgs = () ->
 
 	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h n e d f x D'),
+		boolean: words('h n e d q f x D'),
 		unknown: (opt) ->
 			return true
 		})
@@ -281,6 +287,7 @@ parseCmdArgs = () ->
 		log "   -w process files, then watch for changes"
 		log "   -e just display custom environment variables"
 		log "   -d turn on some debugging"
+		log "   -q quiet output (only errors)"
 		log "   -f initially, process all files, even up to date"
 		log "   -x execute *.cielo files on cmd line"
 		log "   -s dump input & output from starbucks conversions"
@@ -291,6 +298,7 @@ parseCmdArgs = () ->
 	doWatch = hArgs.w
 	envOnly = hArgs.e
 	doDebug = hArgs.d
+	quiet   = hArgs.q
 	doForce = hArgs.f
 	doExec  = hArgs.x
 	debugStarbucks = hArgs.s

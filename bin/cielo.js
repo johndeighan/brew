@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doProcess, doWatch, envOnly, lFiles, main, output, parseCmdArgs, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doProcess, doWatch, envOnly, lFiles, main, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -83,6 +83,8 @@ envOnly = false; // set with -e
 
 doDebug = false; // set with -d
 
+quiet = false; // set with -q
+
 doForce = false; // set with -f
 
 doExec = false; // execute *.js file for *.cielo files on cmd line
@@ -96,7 +98,7 @@ readySeen = false; // set true when 'ready' event is seen
 main = function() {
   var ext, i, jsPath, len, nExec, path, watcher;
   parseCmdArgs();
-  if (doDebug) {
+  if (!quiet) {
     log(`DIR_ROOT: ${dirRoot}`);
   }
   loadPrivEnvFrom(dirRoot);
@@ -163,7 +165,7 @@ main = function() {
         return;
       }
       if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
-        if (doDebug || readySeen) {
+        if (!quiet) {
           log(`${event} ${shortenPath(path)}`);
         }
         ext = lMatches[0];
@@ -179,24 +181,30 @@ main = function() {
 
 // ---------------------------------------------------------------------------
 brewFile = function(path) {
-  if (doDebug || readySeen) {
-    log(`brew ${shortenPath(path)}`);
+  var err;
+  if (!quiet) {
+    log(`   brew ${shortenPath(path)}`);
   }
-  switch (fileExt(path)) {
-    case '.cielo':
-      brewCieloFile(path);
-      break;
-    case '.coffee':
-      brewCoffeeFile(path);
-      break;
-    case '.starbucks':
-      brewStarbucksFile(path);
-      break;
-    case '.taml':
-      brewTamlFile(path);
-      break;
-    default:
-      croak(`Unknown file type: ${path}`);
+  try {
+    switch (fileExt(path)) {
+      case '.cielo':
+        brewCieloFile(path);
+        break;
+      case '.coffee':
+        brewCoffeeFile(path);
+        break;
+      case '.starbucks':
+        brewStarbucksFile(path);
+        break;
+      case '.taml':
+        brewTamlFile(path);
+        break;
+      default:
+        croak(`Unknown file type: ${path}`);
+    }
+  } catch (error) {
+    err = error;
+    log(`   FAILED: ${err.message}`);
   }
 };
 
@@ -229,16 +237,19 @@ unlinkRelatedFiles = function(path, ext) {
 
 // ---------------------------------------------------------------------------
 removeFile = function(path, ext) {
-  var fullpath;
+  var err, fullpath;
   // --- file 'path' was removed
   //     remove same file, but with ext 'ext'
   fullpath = withExt(path, ext);
   try {
-    fs.unlinkSync(fullpath);
-    if (doDebug || readySeen) {
+    if (!quiet) {
       log(`   unlink ${filename}`);
     }
-  } catch (error) {}
+    fs.unlinkSync(fullpath);
+  } catch (error) {
+    err = error;
+    log(`   FAILED: ${err.message}`);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -345,7 +356,7 @@ parseCmdArgs = function() {
   var hArgs, i, j, len, len1, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n e d f x D'),
+    boolean: words('h n e d q f x D'),
     unknown: function(opt) {
       return true;
     }
@@ -357,6 +368,7 @@ parseCmdArgs = function() {
     log("   -w process files, then watch for changes");
     log("   -e just display custom environment variables");
     log("   -d turn on some debugging");
+    log("   -q quiet output (only errors)");
     log("   -f initially, process all files, even up to date");
     log("   -x execute *.cielo files on cmd line");
     log("   -s dump input & output from starbucks conversions");
@@ -367,6 +379,7 @@ parseCmdArgs = function() {
   doWatch = hArgs.w;
   envOnly = hArgs.e;
   doDebug = hArgs.d;
+  quiet = hArgs.q;
   doForce = hArgs.f;
   doExec = hArgs.x;
   debugStarbucks = hArgs.s;
