@@ -146,6 +146,9 @@ main = function() {
     }
     return;
   }
+  watcher = chokidar.watch(dirRoot, {
+    persistent: doWatch
+  });
   watcher.on('all', function(event, path) {
     var lMatches;
     if (event === 'ready') {
@@ -174,9 +177,6 @@ main = function() {
         return brewFile(path);
       }
     }
-  });
-  watcher = chokidar.watch(dirRoot, {
-    persistent: doWatch
   });
 };
 

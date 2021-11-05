@@ -87,6 +87,10 @@ main = () ->
 					)
 		return   # --- DONE
 
+	watcher = chokidar.watch(dirRoot, {
+		persistent: doWatch,
+		})
+
 	watcher.on 'all', (event, path) ->
 
 		if event == 'ready'
@@ -110,10 +114,6 @@ main = () ->
 				unlinkRelatedFiles(path, ext)
 			else
 				brewFile path
-
-	watcher = chokidar.watch(dirRoot, {
-		persistent: doWatch,
-		})
 
 	return
 
