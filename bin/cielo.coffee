@@ -100,8 +100,9 @@ main = () ->
 
 	watcher.on 'all', (event, path) ->
 
-		# --- never process files in a node_modules folder
-		if path.match(/node_modules/)
+		# --- never process files in a node_modules directory
+		#     or any directory whose name begins with '.'
+		if path.match(/node_modules/) || path.match(/[\/\\]\./)
 			return
 
 		if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
