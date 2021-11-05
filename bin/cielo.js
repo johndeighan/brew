@@ -114,6 +114,9 @@ main = function() {
     nExec = 0; // --- number of files executed
     for (i = 0, len = lFiles.length; i < len; i++) {
       path = lFiles[i];
+      if (!quiet) {
+        log(`BREW ${shortenPath(path)}`);
+      }
       brewFile(path);
       ext = fileExt(path);
       if (ext === '.cielo') {
@@ -140,7 +143,9 @@ main = function() {
         });
       }
     }
-    log(`${nExec} files processed`);
+    if (!quiet && doExec) {
+      log(`${nExec} files executed`);
+    }
     return;
   }
   watcher = chokidar.watch(dirRoot, {

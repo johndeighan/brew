@@ -57,6 +57,8 @@ main = () ->
 		# --- Process only these files
 		nExec = 0           # --- number of files executed
 		for path in lFiles
+			if ! quiet
+				log "BREW #{shortenPath(path)}"
 			brewFile path
 
 			ext = fileExt(path)
@@ -82,7 +84,8 @@ main = () ->
 					else
 						log stdout
 					)
-		log "#{nExec} files processed"
+		if ! quiet && doExec
+			log "#{nExec} files executed"
 		return   # --- DONE
 
 	watcher = chokidar.watch(dirRoot, {
