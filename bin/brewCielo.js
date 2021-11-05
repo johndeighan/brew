@@ -18,6 +18,10 @@ import {
 } from '@jdeighan/coffee-utils/block';
 
 import {
+  log
+} from '@jdeighan/coffee-utils/log';
+
+import {
   debug
 } from '@jdeighan/coffee-utils/debug';
 

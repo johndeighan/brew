@@ -5,6 +5,7 @@ import CoffeeScript from 'coffeescript'
 import {assert, isEmpty, croak} from '@jdeighan/coffee-utils'
 import {indentLevel} from '@jdeighan/coffee-utils/indent'
 import {joinBlocks} from '@jdeighan/coffee-utils/block'
+import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {SmartInput} from '@jdeighan/string-input'
 import {
