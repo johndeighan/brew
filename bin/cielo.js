@@ -380,13 +380,27 @@ parseCmdArgs = function() {
     log("<dir> defaults to current working directory");
     process.exit();
   }
-  doWatch = hArgs.w;
-  envOnly = hArgs.e;
-  doDebug = hArgs.d;
-  quiet = hArgs.q;
-  doForce = hArgs.f;
-  doExec = hArgs.x;
-  debugStarbucks = hArgs.s;
+  if (hArgs.w) {
+    doWatch = true;
+  }
+  if (hArgs.e) {
+    envOnly = true;
+  }
+  if (hArgs.d) {
+    doDebug = true;
+  }
+  if (hArgs.q) {
+    quiet = true;
+  }
+  if (hArgs.f) {
+    doForce = true;
+  }
+  if (hArgs.x) {
+    doExec = true;
+  }
+  if (hArgs.s) {
+    debugStarbucks = true;
+  }
   if (hArgs.D) {
     setDebugging(true);
   }

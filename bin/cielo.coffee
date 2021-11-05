@@ -304,13 +304,13 @@ parseCmdArgs = () ->
 		log "<dir> defaults to current working directory"
 		process.exit()
 
-	doWatch = hArgs.w
-	envOnly = hArgs.e
-	doDebug = hArgs.d
-	quiet   = hArgs.q
-	doForce = hArgs.f
-	doExec  = hArgs.x
-	debugStarbucks = hArgs.s
+	doWatch = true if hArgs.w
+	envOnly = true if hArgs.e
+	doDebug = true if hArgs.d
+	quiet   = true if hArgs.q
+	doForce = true if hArgs.f
+	doExec  = true if hArgs.x
+	debugStarbucks = true if hArgs.s
 
 	if hArgs.D
 		setDebugging true
