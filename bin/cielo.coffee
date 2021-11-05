@@ -41,8 +41,6 @@ readySeen = false      # set true when 'ready' event is seen
 main = () ->
 
 	parseCmdArgs()
-	if ! quiet
-		log "DIR_ROOT: #{dirRoot}"
 
 	loadPrivEnvFrom(dirRoot)
 	if envOnly
@@ -91,18 +89,19 @@ main = () ->
 		persistent: doWatch,
 		})
 
+	watcher.on 'ready', (event, path) ->
+
+		if ! quiet
+			log "#{event}"
+			if doWatch
+				log "...watching for further file changes"
+			else
+				log "...not watching for further file changes"
+		readySeen = true
+
 	watcher.on 'all', (event, path) ->
 
-		if event == 'ready'
-			if ! quiet
-				log "#{event}"
-				if doWatch
-					log "...watching for further file changes"
-				else
-					log "...not watching for further file changes"
-			readySeen = true
-			return
-
+		# --- never process files in a node_modules folder
 		if path.match(/node_modules/)
 			return
 
@@ -115,15 +114,12 @@ main = () ->
 			else
 				brewFile path
 
-	log "DONE"
 	return
 
 # ---------------------------------------------------------------------------
 
 brewFile = (path) ->
 
-	if ! quiet
-		log "   brew #{shortenPath(path)}"
 	try
 		switch fileExt(path)
 			when '.cielo'
@@ -266,9 +262,9 @@ output = (code, srcPath, destPath) ->
 
 # ---------------------------------------------------------------------------
 
-dumpCmdArgs = () ->
+dumpOptions = () ->
 
-	log "CMD ARGS:"
+	log "OPTIONS:"
 	log "   doWatch = #{doWatch}"
 	log "   envOnly = #{envOnly}"
 	log "   doDebug = #{doDebug}"
@@ -312,18 +308,24 @@ parseCmdArgs = () ->
 	doExec  = true if hArgs.x
 	debugStarbucks = true if hArgs.s
 
+	if ! quiet
+		dumpOptions()
+
 	if hArgs.D
 		setDebugging true
 
 	if hArgs._?
 		for path in hArgs._
 			if path.indexOf('.') == 0
+				# --- relative path - convert to absolute
 				path = getFullPath(path)  # converts \ to /
 			else
 				path = mkpath(path)    # convert \ to /
 			if isDir(path)
 				assert ! dirRoot, "multiple dirs not allowed"
 				dirRoot = path
+				if ! quiet
+					log "DIR_ROOT: #{dirRoot} (from cmd line)"
 			else if isFile(path)
 				lFiles.push path
 			else
@@ -332,16 +334,18 @@ parseCmdArgs = () ->
 	if ! dirRoot
 		if process.env.DIR_ROOT
 			dirRoot = mkpath(process.env.DIR_ROOT)
+			if ! quiet
+				log "DIR_ROOT: #{dirRoot} (from env var)"
 		else
 			dirRoot = process.env.DIR_ROOT = mkpath(process.cwd())
+			if ! quiet
+				log "DIR_ROOT: #{dirRoot} (from cwd())"
 
 	# --- Convert any simple file names in lFiles to full path
 	for path in lFiles
 		if isSimpleFileName(path)
 			path = mkpath(dirRoot, path)
 
-	if ! quiet
-		dumpCmdArgs()
 	return
 
 # ---------------------------------------------------------------------------
