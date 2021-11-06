@@ -254,7 +254,7 @@ brewCieloFile = function(srcPath) {
 
 // ---------------------------------------------------------------------------
 brewCoffeeFile = function(srcPath) {
-  var coffeeCode, destPath, dumpfile, jsCode, lNeeded, n;
+  var coffeeCode, destPath, dumpfile, i, jsCode, lNeeded, len, n, sym, word;
   // --- coffee => js
   destPath = withExt(srcPath, '.js', {
     removeLeadingUnderScore: true
@@ -268,10 +268,12 @@ brewCoffeeFile = function(srcPath) {
         log(`NO NEEDED SYMBOLS in ${shortenPath(destPath)}:`);
       } else {
         n = lNeeded.length;
-        log(`${n} NEED SYMBOLS in ${shortenPath(destPath)}:`);
-        log('lSymbols', lNeeded, {
-          itemPrefix: '   '
-        });
+        word = n === 1 ? 'SYMBOL' : 'SYMBOLS';
+        log(`${n} NEEDED ${word} in ${shortenPath(destPath)}:`);
+        for (i = 0, len = lSymbols.length; i < len; i++) {
+          sym = lSymbols[i];
+          log(`   - ${sym}`);
+        }
       }
     }
     jsCode = brewCoffee(coffeeCode);

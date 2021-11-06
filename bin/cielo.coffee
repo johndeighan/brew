@@ -193,8 +193,10 @@ brewCoffeeFile = (srcPath) ->
 				log "NO NEEDED SYMBOLS in #{shortenPath(destPath)}:"
 			else
 				n = lNeeded.length
-				log "#{n} NEED SYMBOLS in #{shortenPath(destPath)}:"
-				log 'lSymbols', lNeeded, {itemPrefix: '   '}
+				word = if (n==1) then'SYMBOL' else 'SYMBOLS'
+				log "#{n} NEEDED #{word} in #{shortenPath(destPath)}:"
+				for sym in lSymbols
+					log "   - #{sym}"
 		jsCode = brewCoffee(coffeeCode)
 		output jsCode, srcPath, destPath
 	return
