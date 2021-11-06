@@ -95,7 +95,7 @@ doExec = false; // execute *.js file for *.cielo files on cmd line
 
 debugStarbucks = false; // set with -s
 
-saveAST = false; // set with -a
+saveAST = false; // set with -A
 
 readySeen = false; // set true when 'ready' event is seen
 
@@ -254,7 +254,7 @@ brewCieloFile = function(srcPath) {
 
 // ---------------------------------------------------------------------------
 brewCoffeeFile = function(srcPath) {
-  var coffeeCode, destPath, dumpfile, jsCode, lNeeded;
+  var coffeeCode, destPath, dumpfile, jsCode, lNeeded, n;
   // --- coffee => js
   destPath = withExt(srcPath, '.js', {
     removeLeadingUnderScore: true
@@ -264,10 +264,15 @@ brewCoffeeFile = function(srcPath) {
     if (saveAST) {
       dumpfile = withExt(srcPath, '.ast');
       lNeeded = getNeededSymbols(coffeeCode, {dumpfile});
-      log(`NEED SYMBOLS in ${shortenPath(destPath)}:`);
-      log('lSymbols', lNeeded, {
-        prefix: '   '
-      });
+      if ((lNeeded === undef) || (lNeeded.length === 0)) {
+        log(`NO NEEDED SYMBOLS in ${shortenPath(destPath)}:`);
+      } else {
+        n = lNeeded.length;
+        log(`${n} NEED SYMBOLS in ${shortenPath(destPath)}:`);
+        log('lSymbols', lNeeded, {
+          itemPrefix: '   '
+        });
+      }
     }
     jsCode = brewCoffee(coffeeCode);
     output(jsCode, srcPath, destPath);
@@ -391,6 +396,7 @@ dumpOptions = function() {
   log(`   doForce = ${doForce}`);
   log(`   doExec = ${doExec}`);
   log(`   debugStarbucks = ${debugStarbucks}`);
+  log(`   saveAST = ${saveAST}`);
 };
 
 // ---------------------------------------------------------------------------
@@ -398,7 +404,7 @@ parseCmdArgs = function() {
   var hArgs, i, j, len, len1, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n e d q f x D a'),
+    boolean: words('h n e d q f x D A'),
     unknown: function(opt) {
       return true;
     }
@@ -415,7 +421,7 @@ parseCmdArgs = function() {
     log("   -x execute *.cielo files on cmd line");
     log("   -s dump input & output from starbucks conversions");
     log("   -D turn on debugging (a lot of output!)");
-    log("   -a save CoffeeScript abstract syntax trees");
+    log("   -A save CoffeeScript abstract syntax trees");
     log("<dir> defaults to current working directory");
     process.exit();
   }
@@ -437,7 +443,7 @@ parseCmdArgs = function() {
   if (hArgs.x) {
     doExec = true;
   }
-  if (hArgs.a) {
+  if (hArgs.A) {
     saveAST = true;
   }
   if (hArgs.s) {
