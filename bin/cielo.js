@@ -270,8 +270,8 @@ brewCoffeeFile = function(srcPath) {
         n = lNeeded.length;
         word = n === 1 ? 'SYMBOL' : 'SYMBOLS';
         log(`${n} NEEDED ${word} in ${shortenPath(destPath)}:`);
-        for (i = 0, len = lSymbols.length; i < len; i++) {
-          sym = lSymbols[i];
+        for (i = 0, len = lNeeded.length; i < len; i++) {
+          sym = lNeeded[i];
           log(`   - ${sym}`);
         }
       }

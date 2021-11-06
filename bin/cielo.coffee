@@ -195,7 +195,7 @@ brewCoffeeFile = (srcPath) ->
 				n = lNeeded.length
 				word = if (n==1) then'SYMBOL' else 'SYMBOLS'
 				log "#{n} NEEDED #{word} in #{shortenPath(destPath)}:"
-				for sym in lSymbols
+				for sym in lNeeded
 					log "   - #{sym}"
 		jsCode = brewCoffee(coffeeCode)
 		output jsCode, srcPath, destPath
