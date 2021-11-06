@@ -21,7 +21,7 @@ import {loadPrivEnvFrom} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
-import {brewCielo, brewCoffee} from './brewCielo.js'
+import {brewCielo, brewCoffee} from '../src/brewCielo.js'
 
 dirRoot = undef
 lFiles = []            # to process individual files
