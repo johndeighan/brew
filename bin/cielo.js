@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, output, parseCmdArgs, quiet, readySeen, removeFile, unlinkRelatedFiles;
+var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, output, parseCmdArgs, quiet, readySeen, removeFile, saveAST, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -58,6 +58,10 @@ import {
 } from '@jdeighan/env';
 
 import {
+  getNeededSymbols
+} from '@jdeighan/string-input/coffee';
+
+import {
   isTAML,
   taml
 } from '@jdeighan/string-input/taml';
@@ -90,6 +94,8 @@ doForce = false; // set with -f
 doExec = false; // execute *.js file for *.cielo files on cmd line
 
 debugStarbucks = false; // set with -s
+
+saveAST = false; // set with -a
 
 readySeen = false; // set true when 'ready' event is seen
 
@@ -248,13 +254,22 @@ brewCieloFile = function(srcPath) {
 
 // ---------------------------------------------------------------------------
 brewCoffeeFile = function(srcPath) {
-  var destPath, jsCode;
+  var coffeeCode, destPath, dumpfile, jsCode, lNeeded;
   // --- coffee => js
   destPath = withExt(srcPath, '.js', {
     removeLeadingUnderScore: true
   });
   if (needsUpdate(srcPath, destPath)) {
-    jsCode = brewCoffee(slurp(srcPath));
+    coffeeCode = slurp(srcPath);
+    if (saveAST) {
+      dumpfile = withExt(srcPath, '.ast');
+      lNeeded = getNeededSymbols(coffeeCode, {dumpfile});
+      log(`NEED SYMBOLS in ${shortenPath(destPath)}:`);
+      log('lSymbols', lNeeded, {
+        prefix: '   '
+      });
+    }
+    jsCode = brewCoffee(coffeeCode);
     output(jsCode, srcPath, destPath);
   }
 };
@@ -383,7 +398,7 @@ parseCmdArgs = function() {
   var hArgs, i, j, len, len1, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h n e d q f x D'),
+    boolean: words('h n e d q f x D a'),
     unknown: function(opt) {
       return true;
     }
@@ -400,6 +415,7 @@ parseCmdArgs = function() {
     log("   -x execute *.cielo files on cmd line");
     log("   -s dump input & output from starbucks conversions");
     log("   -D turn on debugging (a lot of output!)");
+    log("   -a save CoffeeScript abstract syntax trees");
     log("<dir> defaults to current working directory");
     process.exit();
   }
@@ -420,6 +436,9 @@ parseCmdArgs = function() {
   }
   if (hArgs.x) {
     doExec = true;
+  }
+  if (hArgs.a) {
+    saveAST = true;
   }
   if (hArgs.s) {
     debugStarbucks = true;

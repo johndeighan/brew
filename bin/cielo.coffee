@@ -18,6 +18,7 @@ import {
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
 import {loadPrivEnvFrom} from '@jdeighan/env'
+import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
 import {brewCielo, brewCoffee} from './brewCielo.js'
@@ -33,6 +34,7 @@ quiet   = false        # set with -q
 doForce = false        # set with -f
 doExec = false         # execute *.js file for *.cielo files on cmd line
 debugStarbucks = false # set with -s
+saveAST = false        # set with -a
 
 readySeen = false      # set true when 'ready' event is seen
 nProcessed = 0
@@ -183,7 +185,13 @@ brewCoffeeFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.js', {removeLeadingUnderScore:true})
 	if needsUpdate(srcPath, destPath)
-		jsCode = brewCoffee(slurp(srcPath))
+		coffeeCode = slurp(srcPath)
+		if saveAST
+			dumpfile = withExt(srcPath, '.ast')
+			lNeeded = getNeededSymbols(coffeeCode, {dumpfile})
+			log "NEED SYMBOLS in #{shortenPath(destPath)}:"
+			log 'lSymbols', lNeeded, {prefix: '   '}
+		jsCode = brewCoffee(coffeeCode)
 		output jsCode, srcPath, destPath
 	return
 
@@ -299,7 +307,7 @@ parseCmdArgs = () ->
 
 	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h n e d q f x D'),
+		boolean: words('h n e d q f x D a'),
 		unknown: (opt) ->
 			return true
 		})
@@ -316,6 +324,7 @@ parseCmdArgs = () ->
 		log "   -x execute *.cielo files on cmd line"
 		log "   -s dump input & output from starbucks conversions"
 		log "   -D turn on debugging (a lot of output!)"
+		log "   -a save CoffeeScript abstract syntax trees"
 		log "<dir> defaults to current working directory"
 		process.exit()
 
@@ -325,6 +334,7 @@ parseCmdArgs = () ->
 	quiet   = true if hArgs.q
 	doForce = true if hArgs.f
 	doExec  = true if hArgs.x
+	saveAST = true if hArgs.a
 	debugStarbucks = true if hArgs.s
 
 	if ! quiet
