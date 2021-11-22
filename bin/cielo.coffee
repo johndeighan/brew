@@ -11,7 +11,7 @@ import {
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
-	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
+	slurp, withExt, mkpath, forEachFile, newerDestFileExists,
 	shortenPath, isFile, isDir, isSimpleFileName, getFullPath,
 	fileExt
 	} from '@jdeighan/coffee-utils/fs'
@@ -21,7 +21,7 @@ import {loadPrivEnvFrom} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
-import {brewCielo, brewCoffee} from '../src/brewCielo.js'
+import {brewCielo, brewCoffee, output} from '../src/brewCielo.js'
 
 dirRoot = undef
 lFiles = []            # to process individual files
@@ -174,8 +174,8 @@ brewCieloFile = (srcPath) ->
 
 	destPath = withExt(srcPath, '.coffee')
 	if needsUpdate(srcPath, destPath)
-		coffeeCode = brewCielo(slurp(srcPath))
-		output coffeeCode, srcPath, destPath
+		hCielo = brewCielo(slurp(srcPath))
+		output hCielo.code, srcPath, destPath, quiet
 	return
 
 # ---------------------------------------------------------------------------
@@ -197,8 +197,8 @@ brewCoffeeFile = (srcPath) ->
 				log "#{n} NEEDED #{word} in #{shortenPath(destPath)}:"
 				for sym in lNeeded
 					log "   - #{sym}"
-		jsCode = brewCoffee(coffeeCode)
-		output jsCode, srcPath, destPath
+		hCoffee = brewCoffee(coffeeCode)
+		output hCoffee.code, srcPath, destPath, quiet
 	return
 
 # ---------------------------------------------------------------------------
@@ -222,7 +222,7 @@ brewStarbucksFile = (srcPath) ->
 		if debugStarbucks
 			log code
 			log sep_eq
-		output code, srcPath, destPath
+		output code, srcPath, destPath, quiet
 	return
 
 # ---------------------------------------------------------------------------
@@ -239,7 +239,7 @@ brewTamlFile = (srcPath) ->
 			import {TAMLDataStore} from '@jdeighan/starbucks/stores';
 
 			export let #{stub} = new TAMLDataStore(`#{tamlCode}`);
-			""", srcPath, destPath)
+			""", srcPath, destPath, quiet)
 	return
 
 # ---------------------------------------------------------------------------
@@ -282,19 +282,6 @@ removeFile = (path, ext, hOptions={}) ->
 
 # ---------------------------------------------------------------------------
 
-output = (code, srcPath, destPath) ->
-
-	try
-		barf destPath, code
-		nProcessed += 1
-	catch err
-		log "ERROR: #{err.message}"
-	if ! quiet
-		log "   => #{shortenPath(destPath)}"
-	return
-
-# ---------------------------------------------------------------------------
-
 dumpOptions = () ->
 
 	log "OPTIONS:"
@@ -314,14 +301,14 @@ parseCmdArgs = () ->
 
 	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h n e d q f x D A'),
+		boolean: words('h w e d q f x s D A'),
 		unknown: (opt) ->
 			return true
 		})
 
 	# --- Handle request for help
 	if hArgs.h
-		log "cielo [ <dir> ]"
+		log "cielo { <dir> | <file> }"
 		log "   -h help"
 		log "   -w process files, then watch for changes"
 		log "   -e just display custom environment variables"

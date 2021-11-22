@@ -7,7 +7,7 @@ import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {log} from '@jdeighan/coffee-utils/log'
 import {starbucks} from '@jdeighan/starbucks'
 import {loadPrivEnvFrom} from '@jdeighan/env'
-import {brewCielo} from '../bin/brewCielo.js'
+import {brewCielo} from '../src/brewCielo.js'
 
 loadPrivEnvFrom(mydir(`import.meta.url`))
 
@@ -240,7 +240,7 @@ class CieloTester extends UnitTester
 
 	transformValue: (code) ->
 
-		return brewCielo(code, 'coffee')
+		return brewCielo(code, 'coffee').code
 
 export cieloTester = new CieloTester()
 

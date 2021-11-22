@@ -6,6 +6,7 @@ import {assert, isEmpty, croak} from '@jdeighan/coffee-utils'
 import {indentLevel} from '@jdeighan/coffee-utils/indent'
 import {joinBlocks} from '@jdeighan/coffee-utils/block'
 import {log} from '@jdeighan/coffee-utils/log'
+import {slurp, barf} from '@jdeighan/coffee-utils/fs'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {SmartInput} from '@jdeighan/string-input'
 import {
@@ -53,7 +54,16 @@ export brewCielo = (code) ->
 		coffeeCode = joinBlocks(lImports..., coffeeCode)
 
 	debug "return from brewCielo()", coffeeCode
-	return coffeeCode
+	return {
+		code: coffeeCode
+		}
+
+# ---------------------------------------------------------------------------
+
+export brewCieloFile = (srcPath) ->
+
+	code = slurp(srcPath)
+	return brewCielo(code)
 
 # ---------------------------------------------------------------------------
 
@@ -68,4 +78,40 @@ export brewCoffee = (code) ->
 	catch err
 		croak err, "Original Coffee Code", code
 	debug "return from brewCoffee()", jsCode
-	return jsCode
+	return {
+		code: jsCode
+		}
+
+# ---------------------------------------------------------------------------
+
+export brewCoffeeFile = (srcPath) ->
+
+	code = slurp(srcPath)
+	return brewCoffee(code)
+
+# ---------------------------------------------------------------------------
+
+nProcessed = 0
+
+# ---------------------------------------------------------------------------
+
+export output = (code, srcPath, destPath, quiet=false) ->
+
+	try
+		barf destPath, code
+		nProcessed += 1
+	catch err
+		log "ERROR: #{err.message}"
+	if ! quiet
+		log "   => #{shortenPath(destPath)}"
+	return
+
+# ---------------------------------------------------------------------------
+
+dumpStats = (quiet) ->
+
+	if ! quiet
+		log "#{nProcessed} files processed"
+	return
+
+# ---------------------------------------------------------------------------

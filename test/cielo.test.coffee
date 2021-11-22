@@ -10,7 +10,7 @@ import {mydir, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {hPrivEnv} from '@jdeighan/coffee-utils/privenv'
 import {loadPrivEnvFrom} from '@jdeighan/env'
-import {brewCielo} from '../bin/brewCielo.js'
+import {brewCielo} from '../src/brewCielo.js'
 
 dir = mydir(`import.meta.url`)
 hPrivEnv.DIR_MARKDOWN = mkpath(dir, 'markdown')
@@ -34,7 +34,7 @@ simple = new UnitTester()
 class CieloTester extends UnitTester
 
 	transformValue: (code) ->
-		return brewCielo(code, 'coffee')
+		return brewCielo(code, 'coffee').code
 
 	normalize: (line) ->  # disable normalizing, to check proper indentation
 		return line
