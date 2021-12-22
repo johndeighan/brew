@@ -1,4 +1,4 @@
-# brew.test.coffee
+# starbucks.test.coffee
 
 import assert from 'assert'
 
@@ -6,10 +6,11 @@ import {slurp, mydir, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {log} from '@jdeighan/coffee-utils/log'
 import {starbucks} from '@jdeighan/starbucks'
-import {loadPrivEnvFrom} from '@jdeighan/env'
+import {loadEnv} from '@jdeighan/env'
 import {brewCielo} from '../src/brewCielo.js'
 
-loadPrivEnvFrom(mydir(`import.meta.url`))
+process.env.DIR_ROOT = mydir(`import.meta.url`)
+loadEnv()
 
 # ---------------------------------------------------------------------------
 

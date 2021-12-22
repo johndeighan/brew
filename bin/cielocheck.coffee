@@ -16,12 +16,11 @@ import {
 	fileExt
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
-import {loadPrivEnvFrom} from '@jdeighan/env'
+import {loadEnv} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {brewCielo, brewCoffee, output} from '../src/brewCielo.js'
 
-dirRoot = undef
+dirRoot = undef        # set in parseCmdArgs()
 lFiles = []            # to process individual files
 
 # --- Default values for flags
@@ -35,10 +34,9 @@ nProcessed = 0
 main = () ->
 
 	parseCmdArgs()
-	loadPrivEnvFrom(dirRoot)
+	process.env.DIR_ROOT = dirRoot
+	loadEnv()
 	checkDirs()
-	if doDebug
-		logPrivEnv()
 
 	if nonEmpty(lFiles)
 		# --- Process only these files
@@ -195,11 +193,11 @@ parseCmdArgs = () ->
 
 checkDir = (key) ->
 
-	dir = hPrivEnv[key]
+	dir = process.env[key]
 	if dir && ! fs.existsSync(dir)
 		if doDebug
 			warn "directory #{key} '#{dir}' does not exist - removing"
-		delete hPrivEnv[key]
+		delete process.env[key]
 	return
 
 # ---------------------------------------------------------------------------

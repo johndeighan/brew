@@ -48,12 +48,7 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  hPrivEnv,
-  logPrivEnv
-} from '@jdeighan/coffee-utils/privenv';
-
-import {
-  loadPrivEnvFrom
+  loadEnv
 } from '@jdeighan/env';
 
 import {
@@ -66,7 +61,7 @@ import {
   output
 } from '../src/brewCielo.js';
 
-dirRoot = undef;
+dirRoot = undef; // set in parseCmdArgs()
 
 lFiles = []; // to process individual files
 
@@ -82,11 +77,9 @@ nProcessed = 0;
 main = function() {
   var i, len, path, watcher;
   parseCmdArgs();
-  loadPrivEnvFrom(dirRoot);
+  process.env.DIR_ROOT = dirRoot;
+  loadEnv();
   checkDirs();
-  if (doDebug) {
-    logPrivEnv();
-  }
   if (nonEmpty(lFiles)) {
 // --- Process only these files
     for (i = 0, len = lFiles.length; i < len; i++) {
@@ -258,12 +251,12 @@ parseCmdArgs = function() {
 // ---------------------------------------------------------------------------
 checkDir = function(key) {
   var dir;
-  dir = hPrivEnv[key];
+  dir = process.env[key];
   if (dir && !fs.existsSync(dir)) {
     if (doDebug) {
       warn(`directory ${key} '${dir}' does not exist - removing`);
     }
-    delete hPrivEnv[key];
+    delete process.env[key];
   }
 };
 

@@ -1,4 +1,4 @@
-// brew.test.coffee
+// starbucks.test.coffee
 var CieloTester, StarbucksTester, starbucksTester;
 
 import assert from 'assert';
@@ -22,14 +22,16 @@ import {
 } from '@jdeighan/starbucks';
 
 import {
-  loadPrivEnvFrom
+  loadEnv
 } from '@jdeighan/env';
 
 import {
   brewCielo
 } from '../src/brewCielo.js';
 
-loadPrivEnvFrom(mydir(import.meta.url));
+process.env.DIR_ROOT = mydir(import.meta.url);
+
+loadEnv();
 
 // ---------------------------------------------------------------------------
 StarbucksTester = class StarbucksTester extends UnitTester {

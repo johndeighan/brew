@@ -11,19 +11,19 @@ import {
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
-	slurp, withExt, mkpath, forEachFile, newerDestFileExists,
+	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
 	shortenPath, isFile, isDir, isSimpleFileName, getFullPath,
 	fileExt
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {hPrivEnv, logPrivEnv} from '@jdeighan/coffee-utils/privenv'
-import {loadPrivEnvFrom} from '@jdeighan/env'
+import {loadEnv} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
-import {brewCielo, brewCoffee, output} from '../src/brewCielo.js'
+import {brewCielo} from '@jdeighan/string-input/cielo'
+import {brewCoffee} from '@jdeighan/string-input/coffee'
 
-dirRoot = undef
+dirRoot = undef        # set in parseCmdArgs()
 lFiles = []            # to process individual files
 
 # --- Default values for flags
@@ -45,18 +45,14 @@ nExecuted = 0
 main = () ->
 
 	parseCmdArgs()
-
-	loadPrivEnvFrom(dirRoot)
+	process.env.DIR_ROOT = dirRoot
+	loadEnv()
 	if envOnly
 		doDebug = true
 		checkDirs()
-		logPrivEnv()
 		process.exit()
 
 	checkDirs()
-	if doDebug
-		logPrivEnv()
-
 	if nonEmpty(lFiles)
 		# --- Process only these files
 		for path in lFiles
@@ -373,20 +369,33 @@ parseCmdArgs = () ->
 
 checkDir = (key) ->
 
-	dir = hPrivEnv[key]
+	dir = process.env[key]
 	if dir && ! fs.existsSync(dir)
 		if doDebug
 			warn "directory #{key} '#{dir}' does not exist - removing"
-		delete hPrivEnv[key]
+		delete process.env[key]
 	return
 
 # ---------------------------------------------------------------------------
 
 checkDirs = () ->
 
-	for key of hPrivEnv
+	for key of process.env
 		if key.match(/^DIR_/)
 			checkDir(key)
+	return
+
+# ---------------------------------------------------------------------------
+
+export output = (code, srcPath, destPath, quiet=false) ->
+
+	try
+		barf destPath, code
+		nProcessed += 1
+	catch err
+		log "ERROR: #{err.message}"
+	if ! quiet
+		log "   => #{shortenPath(destPath)}"
 	return
 
 # ---------------------------------------------------------------------------

@@ -30,6 +30,7 @@ import {
 
 import {
   slurp,
+  barf,
   withExt,
   mkpath,
   forEachFile,
@@ -48,12 +49,7 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  hPrivEnv,
-  logPrivEnv
-} from '@jdeighan/coffee-utils/privenv';
-
-import {
-  loadPrivEnvFrom
+  loadEnv
 } from '@jdeighan/env';
 
 import {
@@ -70,12 +66,14 @@ import {
 } from '@jdeighan/starbucks';
 
 import {
-  brewCielo,
-  brewCoffee,
-  output
-} from '../src/brewCielo.js';
+  brewCielo
+} from '@jdeighan/string-input/cielo';
 
-dirRoot = undef;
+import {
+  brewCoffee
+} from '@jdeighan/string-input/coffee';
+
+dirRoot = undef; // set in parseCmdArgs()
 
 lFiles = []; // to process individual files
 
@@ -107,17 +105,14 @@ nExecuted = 0;
 main = function() {
   var ext, i, jsPath, len, path, watcher;
   parseCmdArgs();
-  loadPrivEnvFrom(dirRoot);
+  process.env.DIR_ROOT = dirRoot;
+  loadEnv();
   if (envOnly) {
     doDebug = true;
     checkDirs();
-    logPrivEnv();
     process.exit();
   }
   checkDirs();
-  if (doDebug) {
-    logPrivEnv();
-  }
   if (nonEmpty(lFiles)) {
 // --- Process only these files
     for (i = 0, len = lFiles.length; i < len; i++) {
@@ -485,22 +480,37 @@ parseCmdArgs = function() {
 // ---------------------------------------------------------------------------
 checkDir = function(key) {
   var dir;
-  dir = hPrivEnv[key];
+  dir = process.env[key];
   if (dir && !fs.existsSync(dir)) {
     if (doDebug) {
       warn(`directory ${key} '${dir}' does not exist - removing`);
     }
-    delete hPrivEnv[key];
+    delete process.env[key];
   }
 };
 
 // ---------------------------------------------------------------------------
 checkDirs = function() {
   var key;
-  for (key in hPrivEnv) {
+  for (key in process.env) {
     if (key.match(/^DIR_/)) {
       checkDir(key);
     }
+  }
+};
+
+// ---------------------------------------------------------------------------
+export var output = function(code, srcPath, destPath, quiet = false) {
+  var err;
+  try {
+    barf(destPath, code);
+    nProcessed += 1;
+  } catch (error) {
+    err = error;
+    log(`ERROR: ${err.message}`);
+  }
+  if (!quiet) {
+    log(`   => ${shortenPath(destPath)}`);
   }
 };
 
