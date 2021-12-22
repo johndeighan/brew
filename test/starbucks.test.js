@@ -26,8 +26,8 @@ import {
 } from '@jdeighan/env';
 
 import {
-  brewCielo
-} from '../src/brewCielo.js';
+  brewCieloStr
+} from '@jdeighan/string-input/cielo';
 
 process.env.DIR_ROOT = mydir(import.meta.url);
 
@@ -237,7 +237,7 @@ script
 // ---------------------------------------------------------------------------
 CieloTester = class CieloTester extends UnitTester {
   transformValue(code) {
-    return brewCielo(code, 'coffee').code;
+    return brewCieloStr(code);
   }
 
 };

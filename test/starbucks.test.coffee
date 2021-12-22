@@ -7,7 +7,7 @@ import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {log} from '@jdeighan/coffee-utils/log'
 import {starbucks} from '@jdeighan/starbucks'
 import {loadEnv} from '@jdeighan/env'
-import {brewCielo} from '../src/brewCielo.js'
+import {brewCieloStr} from '@jdeighan/string-input/cielo'
 
 process.env.DIR_ROOT = mydir(`import.meta.url`)
 loadEnv()
@@ -240,8 +240,7 @@ starbucksTester.equal 206, """
 class CieloTester extends UnitTester
 
 	transformValue: (code) ->
-
-		return brewCielo(code, 'coffee').code
+		return brewCieloStr(code)
 
 export cieloTester = new CieloTester()
 

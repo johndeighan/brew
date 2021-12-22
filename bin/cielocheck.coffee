@@ -8,6 +8,7 @@ import {exec} from 'child_process'
 
 import {
 	assert, undef, warn, croak, words, sep_eq, nonEmpty,
+	isString, isArray,
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
@@ -18,7 +19,8 @@ import {
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {loadEnv} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
-import {brewCielo, brewCoffee, output} from '../src/brewCielo.js'
+import {brewCieloFile} from '@jdeighan/string-input/cielo'
+import {brewCoffee} from '@jdeighan/string-input/coffee'
 
 dirRoot = undef        # set in parseCmdArgs()
 lFiles = []            # to process individual files
@@ -73,49 +75,6 @@ main = () ->
 			if event != 'unlink'
 				brewCieloFile path
 
-	return
-
-# ---------------------------------------------------------------------------
-
-brewCieloFile = (srcPath) ->
-	# --- cielo => coffee
-
-	destPath = withExt(srcPath, '.coffee')
-	coffeeCode = brewCielo(slurp(srcPath))
-	dumpfile = withExt(srcPath, '.ast')
-	lNeeded = getNeededSymbols(coffeeCode, {dumpfile})
-	if (lNeeded == undef) || (lNeeded.length == 0)
-		log "NO NEEDED SYMBOLS in #{shortenPath(destPath)}:"
-	else
-		n = lNeeded.length
-		word = if (n==1) then'SYMBOL' else 'SYMBOLS'
-		log "#{n} NEEDED #{word} in #{shortenPath(destPath)}:"
-		for sym in lNeeded
-			log "   - #{sym}"
-#	output coffeeCode, srcPath, destPath
-	return
-
-# ---------------------------------------------------------------------------
-#   Currently Not Used
-# ---------------------------------------------------------------------------
-
-brewCoffeeFile = (srcPath) ->
-	# --- coffee => js
-
-	destPath = withExt(srcPath, '.js', {removeLeadingUnderScore:true})
-	coffeeCode = slurp(srcPath)
-	dumpfile = withExt(srcPath, '.ast')
-	lNeeded = getNeededSymbols(coffeeCode, {dumpfile})
-	if (lNeeded == undef) || (lNeeded.length == 0)
-		log "NO NEEDED SYMBOLS in #{shortenPath(destPath)}:"
-	else
-		n = lNeeded.length
-		word = if (n==1) then'SYMBOL' else 'SYMBOLS'
-		log "#{n} NEEDED #{word} in #{shortenPath(destPath)}:"
-		for sym in lNeeded
-			log "   - #{sym}"
-	hCoffee = brewCoffee(coffeeCode)
-	output hCoffee.code, srcPath, destPath, quiet
 	return
 
 # ---------------------------------------------------------------------------

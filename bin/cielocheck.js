@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCieloFile, brewCoffeeFile, checkDir, checkDirs, dirRoot, doDebug, dumpOptions, lFiles, main, nProcessed, parseCmdArgs, quiet;
+var checkDir, checkDirs, dirRoot, doDebug, dumpOptions, lFiles, main, nProcessed, parseCmdArgs, quiet;
 
 import parseArgs from 'minimist';
 
@@ -21,7 +21,9 @@ import {
   croak,
   words,
   sep_eq,
-  nonEmpty
+  nonEmpty,
+  isString,
+  isArray
 } from '@jdeighan/coffee-utils';
 
 import {
@@ -56,10 +58,12 @@ import {
 } from '@jdeighan/string-input/coffee';
 
 import {
-  brewCielo,
-  brewCoffee,
-  output
-} from '../src/brewCielo.js';
+  brewCieloFile
+} from '@jdeighan/string-input/cielo';
+
+import {
+  brewCoffee
+} from '@jdeighan/string-input/coffee';
 
 dirRoot = undef; // set in parseCmdArgs()
 
@@ -118,55 +122,6 @@ main = function() {
       }
     }
   });
-};
-
-// ---------------------------------------------------------------------------
-brewCieloFile = function(srcPath) {
-  var coffeeCode, destPath, dumpfile, i, lNeeded, len, n, sym, word;
-  // --- cielo => coffee
-  destPath = withExt(srcPath, '.coffee');
-  coffeeCode = brewCielo(slurp(srcPath));
-  dumpfile = withExt(srcPath, '.ast');
-  lNeeded = getNeededSymbols(coffeeCode, {dumpfile});
-  if ((lNeeded === undef) || (lNeeded.length === 0)) {
-    log(`NO NEEDED SYMBOLS in ${shortenPath(destPath)}:`);
-  } else {
-    n = lNeeded.length;
-    word = n === 1 ? 'SYMBOL' : 'SYMBOLS';
-    log(`${n} NEEDED ${word} in ${shortenPath(destPath)}:`);
-    for (i = 0, len = lNeeded.length; i < len; i++) {
-      sym = lNeeded[i];
-      log(`   - ${sym}`);
-    }
-  }
-};
-
-// ---------------------------------------------------------------------------
-//   Currently Not Used
-// ---------------------------------------------------------------------------
-//	output coffeeCode, srcPath, destPath
-brewCoffeeFile = function(srcPath) {
-  var coffeeCode, destPath, dumpfile, hCoffee, i, lNeeded, len, n, sym, word;
-  // --- coffee => js
-  destPath = withExt(srcPath, '.js', {
-    removeLeadingUnderScore: true
-  });
-  coffeeCode = slurp(srcPath);
-  dumpfile = withExt(srcPath, '.ast');
-  lNeeded = getNeededSymbols(coffeeCode, {dumpfile});
-  if ((lNeeded === undef) || (lNeeded.length === 0)) {
-    log(`NO NEEDED SYMBOLS in ${shortenPath(destPath)}:`);
-  } else {
-    n = lNeeded.length;
-    word = n === 1 ? 'SYMBOL' : 'SYMBOLS';
-    log(`${n} NEEDED ${word} in ${shortenPath(destPath)}:`);
-    for (i = 0, len = lNeeded.length; i < len; i++) {
-      sym = lNeeded[i];
-      log(`   - ${sym}`);
-    }
-  }
-  hCoffee = brewCoffee(coffeeCode);
-  output(hCoffee.code, srcPath, destPath, quiet);
 };
 
 // ---------------------------------------------------------------------------

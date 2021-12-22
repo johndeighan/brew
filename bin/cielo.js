@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCieloFile, brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, quiet, readySeen, removeFile, saveAST, unlinkRelatedFiles;
+var brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, quiet, readySeen, removeFile, saveAST, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -21,7 +21,9 @@ import {
   croak,
   words,
   sep_eq,
-  nonEmpty
+  nonEmpty,
+  isString,
+  isArray
 } from '@jdeighan/coffee-utils';
 
 import {
@@ -66,7 +68,7 @@ import {
 } from '@jdeighan/starbucks';
 
 import {
-  brewCielo
+  brewCieloFile
 } from '@jdeighan/string-input/cielo';
 
 import {
@@ -234,17 +236,6 @@ needsUpdate = function(srcPath, destPath) {
     return false;
   }
   return true;
-};
-
-// ---------------------------------------------------------------------------
-brewCieloFile = function(srcPath) {
-  var destPath, hCielo;
-  // --- cielo => coffee
-  destPath = withExt(srcPath, '.coffee');
-  if (needsUpdate(srcPath, destPath)) {
-    hCielo = brewCielo(slurp(srcPath));
-    output(hCielo.code, srcPath, destPath, quiet);
-  }
 };
 
 // ---------------------------------------------------------------------------
@@ -500,7 +491,7 @@ checkDirs = function() {
 };
 
 // ---------------------------------------------------------------------------
-export var output = function(code, srcPath, destPath, quiet = false) {
+export var output = function(code, srcPath, destPath, logit = false) {
   var err;
   try {
     barf(destPath, code);

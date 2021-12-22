@@ -8,6 +8,7 @@ import {exec} from 'child_process'
 
 import {
 	assert, undef, warn, croak, words, sep_eq, nonEmpty,
+	isString, isArray,
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {
@@ -20,7 +21,7 @@ import {loadEnv} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
-import {brewCielo} from '@jdeighan/string-input/cielo'
+import {brewCieloFile} from '@jdeighan/string-input/cielo'
 import {brewCoffee} from '@jdeighan/string-input/coffee'
 
 dirRoot = undef        # set in parseCmdArgs()
@@ -162,17 +163,6 @@ needsUpdate = (srcPath, destPath) ->
 			log "   UP TO DATE"
 		return false
 	return true
-
-# ---------------------------------------------------------------------------
-
-brewCieloFile = (srcPath) ->
-	# --- cielo => coffee
-
-	destPath = withExt(srcPath, '.coffee')
-	if needsUpdate(srcPath, destPath)
-		hCielo = brewCielo(slurp(srcPath))
-		output hCielo.code, srcPath, destPath, quiet
-	return
 
 # ---------------------------------------------------------------------------
 
@@ -387,7 +377,7 @@ checkDirs = () ->
 
 # ---------------------------------------------------------------------------
 
-export output = (code, srcPath, destPath, quiet=false) ->
+export output = (code, srcPath, destPath, logit=false) ->
 
 	try
 		barf destPath, code

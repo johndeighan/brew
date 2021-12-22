@@ -6,10 +6,11 @@ import {
 	undef, pass, isEmpty, isComment,
 	} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
+import {log} from '@jdeighan/coffee-utils/log'
 import {mydir, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {loadEnv} from '@jdeighan/env'
-import {brewCielo} from '../src/brewCielo.js'
+import {brewCieloStr} from '@jdeighan/string-input/cielo'
 
 dir = mydir(`import.meta.url`)
 process.env.DIR_ROOT = dir
@@ -18,7 +19,7 @@ loadEnv()
 simple = new UnitTester()
 
 ###
-	brewCielo() should handle the following:
+	brewCieloStr() should handle the following:
 		- should NOT remove blank lines and comments
 		- #include <file> statements, when DIR_* env vars are set
 		- patch {{FILE}} with the name of the input file
@@ -33,7 +34,7 @@ simple = new UnitTester()
 class CieloTester extends UnitTester
 
 	transformValue: (code) ->
-		return brewCielo(code, 'coffee').code
+		return brewCieloStr(code)
 
 	normalize: (line) ->  # disable normalizing, to check proper indentation
 		return line
@@ -99,7 +100,7 @@ cieloTester.equal 88, """
 # ---------------------------------------------------------------------------
 # --- patch {{LINE}} and {{FILE}}
 
-cieloTester.equal 101, """
+cieloTester.equal 103, """
 		if (x==42)
 			log "line {{LINE}} in {{FILE}}"
 		""", """
@@ -208,5 +209,3 @@ cieloTester.equal 60, """
 				or (x==33)
 			console.log x
 		"""
-
-# ---------------------------------------------------------------------------

@@ -16,6 +16,10 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
+  log
+} from '@jdeighan/coffee-utils/log';
+
+import {
   mydir,
   mkpath
 } from '@jdeighan/coffee-utils/fs';
@@ -29,8 +33,8 @@ import {
 } from '@jdeighan/env';
 
 import {
-  brewCielo
-} from '../src/brewCielo.js';
+  brewCieloStr
+} from '@jdeighan/string-input/cielo';
 
 dir = mydir(import.meta.url);
 
@@ -41,7 +45,7 @@ loadEnv();
 simple = new UnitTester();
 
 /*
-	brewCielo() should handle the following:
+	brewCieloStr() should handle the following:
 		- should NOT remove blank lines and comments
 		- #include <file> statements, when DIR_* env vars are set
 		- patch {{FILE}} with the name of the input file
@@ -53,7 +57,7 @@ simple = new UnitTester();
 // ---------------------------------------------------------------------------
 CieloTester = class CieloTester extends UnitTester {
   transformValue(code) {
-    return brewCielo(code, 'coffee').code;
+    return brewCieloStr(code);
   }
 
   normalize(line) { // disable normalizing, to check proper indentation
@@ -102,7 +106,7 @@ cieloTester.equal(88, `if (x==42)
 
 // ---------------------------------------------------------------------------
 // --- patch {{LINE}} and {{FILE}}
-cieloTester.equal(101, `if (x==42)
+cieloTester.equal(103, `if (x==42)
 	log "line {{LINE}} in {{FILE}}"`, `import {log} from '@jdeighan/coffee-utils/log'
 if (x==42)
 	log "line 2 in unit test"`);
@@ -172,5 +176,3 @@ if (contents == undef)
 cieloTester.equal(60, `if (x==42) or (x==33)
 	console.log x`, `if (x==42) or (x==33)
 	console.log x`);
-
-// ---------------------------------------------------------------------------
