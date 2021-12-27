@@ -14,15 +14,16 @@ import {log} from '@jdeighan/coffee-utils/log'
 import {
 	slurp, barf, withExt, mkpath, forEachFile, newerDestFileExists,
 	shortenPath, isFile, isDir, isSimpleFileName, getFullPath,
-	fileExt
+	fileExt, removeFileWithExt,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
 import {loadEnv} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks} from '@jdeighan/starbucks'
+import {brewTamlFile} from '@jdeighan/starbucks/stores'
 import {brewCieloFile} from '@jdeighan/string-input/cielo'
-import {brewCoffee} from '@jdeighan/string-input/coffee'
+import {brewCoffeeFile} from '@jdeighan/string-input/coffee'
 
 dirRoot = undef        # set in parseCmdArgs()
 lFiles = []            # to process individual files
@@ -107,6 +108,7 @@ main = () ->
 
 		# --- never process files in a node_modules directory
 		#     or any directory whose name begins with '.'
+		assert isString(path), "in watcher: path is not a string"
 		if path.match(/node_modules/) || path.match(/[\/\\]\./)
 			return
 
@@ -141,11 +143,12 @@ brewFile = (path) ->
 			when '.cielo'
 				brewCieloFile path
 			when '.coffee'
-				brewCoffeeFile path
+				force = doForce || readySeen
+				brewCoffeeFile path, undef, {saveAST, force}
 			when '.starbucks'
 				brewStarbucksFile path
 			when '.taml'
-				brewTamlFile path
+				brewTamlFile path, undef, {force}
 			else
 				croak "Unknown file type: #{path}"
 	catch err
@@ -166,104 +169,24 @@ needsUpdate = (srcPath, destPath) ->
 
 # ---------------------------------------------------------------------------
 
-brewCoffeeFile = (srcPath) ->
-	# --- coffee => js
-
-	destPath = withExt(srcPath, '.js', {removeLeadingUnderScore:true})
-	if needsUpdate(srcPath, destPath)
-		coffeeCode = slurp(srcPath)
-		if saveAST
-			dumpfile = withExt(srcPath, '.ast')
-			lNeeded = getNeededSymbols(coffeeCode, {dumpfile})
-			if (lNeeded == undef) || (lNeeded.length == 0)
-				log "NO NEEDED SYMBOLS in #{shortenPath(destPath)}:"
-			else
-				n = lNeeded.length
-				word = if (n==1) then'SYMBOL' else 'SYMBOLS'
-				log "#{n} NEEDED #{word} in #{shortenPath(destPath)}:"
-				for sym in lNeeded
-					log "   - #{sym}"
-		hCoffee = brewCoffee(coffeeCode)
-		output hCoffee.code, srcPath, destPath, quiet
-	return
-
-# ---------------------------------------------------------------------------
-
-brewStarbucksFile = (srcPath) ->
-
-	destPath = withExt(srcPath, '.svelte', {removeLeadingUnderScore:true})
-	if needsUpdate(srcPath, destPath)
-		content = slurp(srcPath)
-		if debugStarbucks
-			log sep_eq
-			log content
-			log sep_eq
-
-		hParsed = pathlib.parse(srcPath)
-		hOptions = {
-			content: content,
-			filename: hParsed.base,
-			}
-		code = starbucks(hOptions).code
-		if debugStarbucks
-			log code
-			log sep_eq
-		output code, srcPath, destPath, quiet
-	return
-
-# ---------------------------------------------------------------------------
-
-brewTamlFile = (srcPath) ->
-
-	destPath = withExt(srcPath, '.js', {removeLeadingUnderScore:true})
-	if needsUpdate(srcPath, destPath)
-		hInfo = pathlib.parse(destPath)
-		stub = hInfo.name
-
-		tamlCode = slurp(srcPath)
-		output("""
-			import {TAMLDataStore} from '@jdeighan/starbucks/stores';
-
-			export let #{stub} = new TAMLDataStore(`#{tamlCode}`);
-			""", srcPath, destPath, quiet)
-	return
-
-# ---------------------------------------------------------------------------
-
 unlinkRelatedFiles = (path, ext) ->
 	# --- file 'path' was removed
 
 	switch ext
 		when '.cielo'
-			removeFile(path, '.coffee')
+			removeFileWithExt(path, '.coffee')
 		when '.coffee', '.taml'
 			if path.indexOf('_') == -1
-				removeFile(path, '.js')
+				removeFileWithExt(path, '.js')
 			else
-				removeFile(path, '.js', {removeLeadingUnderScore:true})
+				removeFileWithExt(path, '.js', {removeLeadingUnderScore:true})
 		when '.starbucks'
 			if path.indexOf('_') == -1
-				removeFile(path, '.svelte')
+				removeFileWithExt(path, '.svelte')
 			else
-				removeFile(path, '.svelte', {removeLeadingUnderScore:true})
+				removeFileWithExt(path, '.svelte', {removeLeadingUnderScore:true})
 		else
 			croak "Invalid file extension: '#{ext}'"
-	return
-
-# ---------------------------------------------------------------------------
-
-removeFile = (path, ext, hOptions={}) ->
-	# --- file 'path' was removed
-	#     remove same file, but with ext 'ext'
-	#     valid options: same as withExt()
-
-	fullpath = withExt(path, ext, hOptions)
-	try
-		if ! quiet
-			log "   unlink #{filename}"
-		fs.unlinkSync fullpath
-	catch err
-		log "   FAILED: #{err.message}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -377,7 +300,7 @@ checkDirs = () ->
 
 # ---------------------------------------------------------------------------
 
-export output = (code, srcPath, destPath, logit=false) ->
+export output = (code, srcPath, destPath) ->
 
 	try
 		barf destPath, code

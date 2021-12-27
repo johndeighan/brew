@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewCoffeeFile, brewFile, brewStarbucksFile, brewTamlFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, quiet, readySeen, removeFile, saveAST, unlinkRelatedFiles;
+var brewFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, quiet, readySeen, saveAST, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -42,7 +42,8 @@ import {
   isDir,
   isSimpleFileName,
   getFullPath,
-  fileExt
+  fileExt,
+  removeFileWithExt
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -68,11 +69,15 @@ import {
 } from '@jdeighan/starbucks';
 
 import {
+  brewTamlFile
+} from '@jdeighan/starbucks/stores';
+
+import {
   brewCieloFile
 } from '@jdeighan/string-input/cielo';
 
 import {
-  brewCoffee
+  brewCoffeeFile
 } from '@jdeighan/string-input/coffee';
 
 dirRoot = undef; // set in parseCmdArgs()
@@ -170,6 +175,7 @@ main = function() {
     var lMatches;
     // --- never process files in a node_modules directory
     //     or any directory whose name begins with '.'
+    assert(isString(path), "in watcher: path is not a string");
     if (path.match(/node_modules/) || path.match(/[\/\\]\./)) {
       return;
     }
@@ -200,20 +206,21 @@ dumpStats = function() {
 
 // ---------------------------------------------------------------------------
 brewFile = function(path) {
-  var err;
+  var err, force;
   try {
     switch (fileExt(path)) {
       case '.cielo':
         brewCieloFile(path);
         break;
       case '.coffee':
-        brewCoffeeFile(path);
+        force = doForce || readySeen;
+        brewCoffeeFile(path, undef, {saveAST, force});
         break;
       case '.starbucks':
         brewStarbucksFile(path);
         break;
       case '.taml':
-        brewTamlFile(path);
+        brewTamlFile(path, undef, {force});
         break;
       default:
         croak(`Unknown file type: ${path}`);
@@ -239,123 +246,33 @@ needsUpdate = function(srcPath, destPath) {
 };
 
 // ---------------------------------------------------------------------------
-brewCoffeeFile = function(srcPath) {
-  var coffeeCode, destPath, dumpfile, hCoffee, i, lNeeded, len, n, sym, word;
-  // --- coffee => js
-  destPath = withExt(srcPath, '.js', {
-    removeLeadingUnderScore: true
-  });
-  if (needsUpdate(srcPath, destPath)) {
-    coffeeCode = slurp(srcPath);
-    if (saveAST) {
-      dumpfile = withExt(srcPath, '.ast');
-      lNeeded = getNeededSymbols(coffeeCode, {dumpfile});
-      if ((lNeeded === undef) || (lNeeded.length === 0)) {
-        log(`NO NEEDED SYMBOLS in ${shortenPath(destPath)}:`);
-      } else {
-        n = lNeeded.length;
-        word = n === 1 ? 'SYMBOL' : 'SYMBOLS';
-        log(`${n} NEEDED ${word} in ${shortenPath(destPath)}:`);
-        for (i = 0, len = lNeeded.length; i < len; i++) {
-          sym = lNeeded[i];
-          log(`   - ${sym}`);
-        }
-      }
-    }
-    hCoffee = brewCoffee(coffeeCode);
-    output(hCoffee.code, srcPath, destPath, quiet);
-  }
-};
-
-// ---------------------------------------------------------------------------
-brewStarbucksFile = function(srcPath) {
-  var code, content, destPath, hOptions, hParsed;
-  destPath = withExt(srcPath, '.svelte', {
-    removeLeadingUnderScore: true
-  });
-  if (needsUpdate(srcPath, destPath)) {
-    content = slurp(srcPath);
-    if (debugStarbucks) {
-      log(sep_eq);
-      log(content);
-      log(sep_eq);
-    }
-    hParsed = pathlib.parse(srcPath);
-    hOptions = {
-      content: content,
-      filename: hParsed.base
-    };
-    code = starbucks(hOptions).code;
-    if (debugStarbucks) {
-      log(code);
-      log(sep_eq);
-    }
-    output(code, srcPath, destPath, quiet);
-  }
-};
-
-// ---------------------------------------------------------------------------
-brewTamlFile = function(srcPath) {
-  var destPath, hInfo, stub, tamlCode;
-  destPath = withExt(srcPath, '.js', {
-    removeLeadingUnderScore: true
-  });
-  if (needsUpdate(srcPath, destPath)) {
-    hInfo = pathlib.parse(destPath);
-    stub = hInfo.name;
-    tamlCode = slurp(srcPath);
-    output(`import {TAMLDataStore} from '@jdeighan/starbucks/stores';
-
-export let ${stub} = new TAMLDataStore(\`${tamlCode}\`);`, srcPath, destPath, quiet);
-  }
-};
-
-// ---------------------------------------------------------------------------
 unlinkRelatedFiles = function(path, ext) {
   // --- file 'path' was removed
   switch (ext) {
     case '.cielo':
-      removeFile(path, '.coffee');
+      removeFileWithExt(path, '.coffee');
       break;
     case '.coffee':
     case '.taml':
       if (path.indexOf('_') === -1) {
-        removeFile(path, '.js');
+        removeFileWithExt(path, '.js');
       } else {
-        removeFile(path, '.js', {
+        removeFileWithExt(path, '.js', {
           removeLeadingUnderScore: true
         });
       }
       break;
     case '.starbucks':
       if (path.indexOf('_') === -1) {
-        removeFile(path, '.svelte');
+        removeFileWithExt(path, '.svelte');
       } else {
-        removeFile(path, '.svelte', {
+        removeFileWithExt(path, '.svelte', {
           removeLeadingUnderScore: true
         });
       }
       break;
     default:
       croak(`Invalid file extension: '${ext}'`);
-  }
-};
-
-// ---------------------------------------------------------------------------
-removeFile = function(path, ext, hOptions = {}) {
-  var err, fullpath;
-  // --- file 'path' was removed
-  //     remove same file, but with ext 'ext'
-  //     valid options: same as withExt()
-  fullpath = withExt(path, ext, hOptions);
-  try {
-    if (!quiet) {
-      log(`   unlink ${filename}`);
-    }
-    fs.unlinkSync(fullpath);
-  } catch (error) {
-    err = error;
-    log(`   FAILED: ${err.message}`);
   }
 };
 
@@ -491,7 +408,7 @@ checkDirs = function() {
 };
 
 // ---------------------------------------------------------------------------
-export var output = function(code, srcPath, destPath, logit = false) {
+export var output = function(code, srcPath, destPath) {
   var err;
   try {
     barf(destPath, code);
