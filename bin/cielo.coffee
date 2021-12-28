@@ -138,21 +138,18 @@ dumpStats = () ->
 
 brewFile = (path) ->
 
-	try
-		switch fileExt(path)
-			when '.cielo'
-				brewCieloFile path
-			when '.coffee'
-				force = doForce || readySeen
-				brewCoffeeFile path, undef, {saveAST, force}
-			when '.starbucks'
-				brewStarbucksFile path
-			when '.taml'
-				brewTamlFile path, undef, {force}
-			else
-				croak "Unknown file type: #{path}"
-	catch err
-		log "   FAILED: #{err.message}"
+	switch fileExt(path)
+		when '.cielo'
+			brewCieloFile path
+		when '.coffee'
+			force = doForce || readySeen
+			brewCoffeeFile path, undef, {saveAST, force}
+		when '.starbucks'
+			brewStarbucksFile path
+		when '.taml'
+			brewTamlFile path, undef, {force}
+		else
+			croak "Unknown file type: #{path}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -240,7 +237,7 @@ parseCmdArgs = () ->
 	saveAST = true if hArgs.A
 	debugStarbucks = true if hArgs.s
 
-	if ! quiet
+	if doDebug
 		dumpOptions()
 
 	if hArgs.D

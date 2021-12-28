@@ -206,28 +206,23 @@ dumpStats = function() {
 
 // ---------------------------------------------------------------------------
 brewFile = function(path) {
-  var err, force;
-  try {
-    switch (fileExt(path)) {
-      case '.cielo':
-        brewCieloFile(path);
-        break;
-      case '.coffee':
-        force = doForce || readySeen;
-        brewCoffeeFile(path, undef, {saveAST, force});
-        break;
-      case '.starbucks':
-        brewStarbucksFile(path);
-        break;
-      case '.taml':
-        brewTamlFile(path, undef, {force});
-        break;
-      default:
-        croak(`Unknown file type: ${path}`);
-    }
-  } catch (error) {
-    err = error;
-    log(`   FAILED: ${err.message}`);
+  var force;
+  switch (fileExt(path)) {
+    case '.cielo':
+      brewCieloFile(path);
+      break;
+    case '.coffee':
+      force = doForce || readySeen;
+      brewCoffeeFile(path, undef, {saveAST, force});
+      break;
+    case '.starbucks':
+      brewStarbucksFile(path);
+      break;
+    case '.taml':
+      brewTamlFile(path, undef, {force});
+      break;
+    default:
+      croak(`Unknown file type: ${path}`);
   }
 };
 
@@ -339,7 +334,7 @@ parseCmdArgs = function() {
   if (hArgs.s) {
     debugStarbucks = true;
   }
-  if (!quiet) {
+  if (doDebug) {
     dumpOptions();
   }
   if (hArgs.D) {
