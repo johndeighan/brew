@@ -125,17 +125,6 @@ main = () ->
 
 # ---------------------------------------------------------------------------
 
-dumpStats = () ->
-
-	if quiet
-		return
-	log "#{nProcessed} files processed"
-	if doExec
-		log "#{nExecuted} files executed"
-	return
-
-# ---------------------------------------------------------------------------
-
 brewFile = (path) ->
 
 	switch fileExt(path)
@@ -150,6 +139,7 @@ brewFile = (path) ->
 			brewTamlFile path, undef, {force}
 		else
 			croak "Unknown file type: #{path}"
+	nProcessed += 1
 	return
 
 # ---------------------------------------------------------------------------
@@ -184,6 +174,17 @@ unlinkRelatedFiles = (path, ext) ->
 				removeFileWithExt(path, '.svelte', {removeLeadingUnderScore:true})
 		else
 			croak "Invalid file extension: '#{ext}'"
+	return
+
+# ---------------------------------------------------------------------------
+
+dumpStats = () ->
+
+	if quiet
+		return
+	log "#{nProcessed} files processed"
+	if doExec
+		log "#{nExecuted} files executed"
 	return
 
 # ---------------------------------------------------------------------------
@@ -293,19 +294,6 @@ checkDirs = () ->
 	for key of process.env
 		if key.match(/^DIR_/)
 			checkDir(key)
-	return
-
-# ---------------------------------------------------------------------------
-
-export output = (code, srcPath, destPath) ->
-
-	try
-		barf destPath, code
-		nProcessed += 1
-	catch err
-		log "ERROR: #{err.message}"
-	if ! quiet
-		log "   => #{shortenPath(destPath)}"
 	return
 
 # ---------------------------------------------------------------------------

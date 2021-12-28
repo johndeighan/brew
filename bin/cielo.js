@@ -194,17 +194,6 @@ main = function() {
 };
 
 // ---------------------------------------------------------------------------
-dumpStats = function() {
-  if (quiet) {
-    return;
-  }
-  log(`${nProcessed} files processed`);
-  if (doExec) {
-    log(`${nExecuted} files executed`);
-  }
-};
-
-// ---------------------------------------------------------------------------
 brewFile = function(path) {
   var force;
   switch (fileExt(path)) {
@@ -224,6 +213,7 @@ brewFile = function(path) {
     default:
       croak(`Unknown file type: ${path}`);
   }
+  nProcessed += 1;
 };
 
 // ---------------------------------------------------------------------------
@@ -268,6 +258,17 @@ unlinkRelatedFiles = function(path, ext) {
       break;
     default:
       croak(`Invalid file extension: '${ext}'`);
+  }
+};
+
+// ---------------------------------------------------------------------------
+dumpStats = function() {
+  if (quiet) {
+    return;
+  }
+  log(`${nProcessed} files processed`);
+  if (doExec) {
+    log(`${nExecuted} files executed`);
   }
 };
 
@@ -399,21 +400,6 @@ checkDirs = function() {
     if (key.match(/^DIR_/)) {
       checkDir(key);
     }
-  }
-};
-
-// ---------------------------------------------------------------------------
-export var output = function(code, srcPath, destPath) {
-  var err;
-  try {
-    barf(destPath, code);
-    nProcessed += 1;
-  } catch (error) {
-    err = error;
-    log(`ERROR: ${err.message}`);
-  }
-  if (!quiet) {
-    log(`   => ${shortenPath(destPath)}`);
   }
 };
 
