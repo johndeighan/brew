@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, quiet, readySeen, saveAST, unlinkRelatedFiles;
+var brewFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, procCieloFiles, procCoffeeFiles, procStarbucksFiles, procTamlFiles, quiet, readySeen, saveAST, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -102,6 +102,14 @@ debugStarbucks = false; // set with -s
 
 saveAST = false; // set with -A
 
+procCieloFiles = false; // set with -c
+
+procCoffeeFiles = false; // set with -k
+
+procStarbucksFiles = false; // set with -s
+
+procTamlFiles = false; // set with -t
+
 readySeen = false; // set true when 'ready' event is seen
 
 nProcessed = 0;
@@ -198,16 +206,28 @@ brewFile = function(path) {
   var force;
   switch (fileExt(path)) {
     case '.cielo':
+      if (!procCieloFiles) {
+        return;
+      }
       brewCieloFile(path);
       break;
     case '.coffee':
+      if (!procCoffeeFiles) {
+        return;
+      }
       force = doForce || readySeen;
       brewCoffeeFile(path, undef, {saveAST, force});
       break;
     case '.starbucks':
+      if (!procStarbucksFiles) {
+        return;
+      }
       brewStarbucksFile(path);
       break;
     case '.taml':
+      if (!procTamlFiles) {
+        return;
+      }
       brewTamlFile(path, undef, {force});
       break;
     default:
@@ -275,6 +295,10 @@ dumpStats = function() {
 // ---------------------------------------------------------------------------
 dumpOptions = function() {
   log("OPTIONS:");
+  log(`   procCieloFiles = ${procCieloFiles}`);
+  log(`   procCoffeeFiles = ${procCoffeeFiles}`);
+  log(`   procStarbucksFiles = ${procStarbucksFiles}`);
+  log(`   procTamlFiles = ${procTamlFiles}`);
   log(`   doWatch = ${doWatch}`);
   log(`   envOnly = ${envOnly}`);
   log(`   doDebug = ${doDebug}`);
@@ -290,7 +314,7 @@ parseCmdArgs = function() {
   var hArgs, i, j, len, len1, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h w e d q f x s D A'),
+    boolean: words('h c k s t w e d q f x S D A'),
     unknown: function(opt) {
       return true;
     }
@@ -299,17 +323,40 @@ parseCmdArgs = function() {
   if (hArgs.h) {
     log("cielo { <dir> | <file> }");
     log("   -h help");
+    log("   -c process *.cielo files");
+    log("   -k process *.coffee files");
+    log("   -s process *.starbucks files");
+    log("   -t process *.taml files");
     log("   -w process files, then watch for changes");
     log("   -e just display custom environment variables");
     log("   -d turn on some debugging");
     log("   -q quiet output (only errors)");
-    log("   -f initially, process all files, even up to date");
+    log("   -f initially, process all files, even if up to date");
     log("   -x execute *.cielo files on cmd line");
-    log("   -s dump input & output from starbucks conversions");
+    log("   -S dump input & output from starbucks conversions");
     log("   -D turn on debugging (a lot of output!)");
     log("   -A save CoffeeScript abstract syntax trees");
     log("<dir> defaults to current working directory");
+    log("if none of -c, -k or -s set, acts as if -cks set");
     process.exit();
+  }
+  if (hArgs.c) {
+    procCieloFiles = true;
+  }
+  if (hArgs.k) {
+    procCoffeeFiles = true;
+  }
+  if (hArgs.s) {
+    procStarbucksFiles = true;
+  }
+  if (hArgs.t) {
+    procTamlFiles = true;
+  }
+  if (!procCieloFiles && !procCoffeeFiles && !procStarbucksFiles && !procTamlFiles) {
+    procCieloFiles = true;
+    procCoffeeFiles = true;
+    procStarbucksFiles = true;
+    procTamlFiles = true;
   }
   if (hArgs.w) {
     doWatch = true;
@@ -332,7 +379,7 @@ parseCmdArgs = function() {
   if (hArgs.A) {
     saveAST = true;
   }
-  if (hArgs.s) {
+  if (hArgs.S) {
     debugStarbucks = true;
   }
   if (doDebug) {

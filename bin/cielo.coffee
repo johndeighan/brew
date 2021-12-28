@@ -38,6 +38,11 @@ doExec = false         # execute *.js file for *.cielo files on cmd line
 debugStarbucks = false # set with -s
 saveAST = false        # set with -A
 
+procCieloFiles = false      # set with -c
+procCoffeeFiles = false     # set with -k
+procStarbucksFiles = false  # set with -s
+procTamlFiles = false       # set with -t
+
 readySeen = false      # set true when 'ready' event is seen
 nProcessed = 0
 nExecuted = 0
@@ -129,13 +134,21 @@ brewFile = (path) ->
 
 	switch fileExt(path)
 		when '.cielo'
+			if ! procCieloFiles
+				return
 			brewCieloFile path
 		when '.coffee'
+			if ! procCoffeeFiles
+				return
 			force = doForce || readySeen
 			brewCoffeeFile path, undef, {saveAST, force}
 		when '.starbucks'
+			if ! procStarbucksFiles
+				return
 			brewStarbucksFile path
 		when '.taml'
+			if ! procTamlFiles
+				return
 			brewTamlFile path, undef, {force}
 		else
 			croak "Unknown file type: #{path}"
@@ -192,6 +205,10 @@ dumpStats = () ->
 dumpOptions = () ->
 
 	log "OPTIONS:"
+	log "   procCieloFiles = #{procCieloFiles}"
+	log "   procCoffeeFiles = #{procCoffeeFiles}"
+	log "   procStarbucksFiles = #{procStarbucksFiles}"
+	log "   procTamlFiles = #{procTamlFiles}"
 	log "   doWatch = #{doWatch}"
 	log "   envOnly = #{envOnly}"
 	log "   doDebug = #{doDebug}"
@@ -208,7 +225,7 @@ parseCmdArgs = () ->
 
 	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h w e d q f x s D A'),
+		boolean: words('h c k s t w e d q f x S D A'),
 		unknown: (opt) ->
 			return true
 		})
@@ -217,17 +234,32 @@ parseCmdArgs = () ->
 	if hArgs.h
 		log "cielo { <dir> | <file> }"
 		log "   -h help"
+		log "   -c process *.cielo files"
+		log "   -k process *.coffee files"
+		log "   -s process *.starbucks files"
+		log "   -t process *.taml files"
 		log "   -w process files, then watch for changes"
 		log "   -e just display custom environment variables"
 		log "   -d turn on some debugging"
 		log "   -q quiet output (only errors)"
-		log "   -f initially, process all files, even up to date"
+		log "   -f initially, process all files, even if up to date"
 		log "   -x execute *.cielo files on cmd line"
-		log "   -s dump input & output from starbucks conversions"
+		log "   -S dump input & output from starbucks conversions"
 		log "   -D turn on debugging (a lot of output!)"
 		log "   -A save CoffeeScript abstract syntax trees"
 		log "<dir> defaults to current working directory"
+		log "if none of -c, -k or -s set, acts as if -cks set"
 		process.exit()
+
+	procCieloFiles = true if hArgs.c
+	procCoffeeFiles = true if hArgs.k
+	procStarbucksFiles = true if hArgs.s
+	procTamlFiles = true if hArgs.t
+	if ! procCieloFiles && ! procCoffeeFiles && ! procStarbucksFiles && ! procTamlFiles
+		procCieloFiles = true
+		procCoffeeFiles = true
+		procStarbucksFiles = true
+		procTamlFiles = true
 
 	doWatch = true if hArgs.w
 	envOnly = true if hArgs.e
@@ -236,7 +268,7 @@ parseCmdArgs = () ->
 	doForce = true if hArgs.f
 	doExec  = true if hArgs.x
 	saveAST = true if hArgs.A
-	debugStarbucks = true if hArgs.s
+	debugStarbucks = true if hArgs.S
 
 	if doDebug
 		dumpOptions()
