@@ -65,7 +65,8 @@ import {
 } from '@jdeighan/string-input/taml';
 
 import {
-  starbucks
+  starbucks,
+  brewStarbucksFile
 } from '@jdeighan/starbucks';
 
 import {
