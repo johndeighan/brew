@@ -9,12 +9,12 @@ import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {log} from '@jdeighan/coffee-utils/log'
 import {mydir, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
-import {loadEnv} from '@jdeighan/env'
+import {loadEnvFrom} from '@jdeighan/env'
 import {brewCieloStr} from '@jdeighan/string-input/cielo'
 
-dir = mydir(`import.meta.url`)
-process.env.DIR_ROOT = dir
-loadEnv()
+dirRoot = mydir(`import.meta.url`)
+process.env.DIR_ROOT = dirRoot
+loadEnvFrom(dirRoot)
 
 simple = new UnitTester()
 

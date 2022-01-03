@@ -6,11 +6,12 @@ import {slurp, mydir, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {log} from '@jdeighan/coffee-utils/log'
 import {starbucks} from '@jdeighan/starbucks'
-import {loadEnv} from '@jdeighan/env'
+import {loadEnvFrom} from '@jdeighan/env'
 import {brewCieloStr} from '@jdeighan/string-input/cielo'
 
-process.env.DIR_ROOT = mydir(`import.meta.url`)
-loadEnv()
+dirRoot = mydir(`import.meta.url`)
+process.env.DIR_ROOT = dirRoot
+loadEnvFrom(dirRoot)
 
 # ---------------------------------------------------------------------------
 

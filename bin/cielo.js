@@ -52,7 +52,7 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  loadEnv
+  loadEnvFrom
 } from '@jdeighan/env';
 
 import {
@@ -119,10 +119,9 @@ nExecuted = 0;
 
 // ---------------------------------------------------------------------------
 main = function() {
-  var ext, i, jsPath, len, path, watcher;
+  var ext, i, jsPath, lEnvFiles, len, path, watcher;
   parseCmdArgs();
-  process.env.DIR_ROOT = dirRoot;
-  loadEnv();
+  lEnvFiles = loadEnvFrom(dirRoot);
   if (envOnly) {
     doDebug = true;
     checkDirs();

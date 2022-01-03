@@ -1,5 +1,5 @@
 // starbucks.test.coffee
-var CieloTester, StarbucksTester, starbucksTester;
+var CieloTester, StarbucksTester, dirRoot, starbucksTester;
 
 import assert from 'assert';
 
@@ -22,16 +22,18 @@ import {
 } from '@jdeighan/starbucks';
 
 import {
-  loadEnv
+  loadEnvFrom
 } from '@jdeighan/env';
 
 import {
   brewCieloStr
 } from '@jdeighan/string-input/cielo';
 
-process.env.DIR_ROOT = mydir(import.meta.url);
+dirRoot = mydir(import.meta.url);
 
-loadEnv();
+process.env.DIR_ROOT = dirRoot;
+
+loadEnvFrom(dirRoot);
 
 // ---------------------------------------------------------------------------
 StarbucksTester = class StarbucksTester extends UnitTester {

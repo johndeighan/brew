@@ -17,7 +17,7 @@ import {
 	fileExt
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {loadEnv} from '@jdeighan/env'
+import {loadEnvFrom} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {brewCieloFile} from '@jdeighan/string-input/cielo'
 import {brewCoffee} from '@jdeighan/string-input/coffee'
@@ -37,7 +37,7 @@ main = () ->
 
 	parseCmdArgs()
 	process.env.DIR_ROOT = dirRoot
-	loadEnv()
+	lEnvFiles = loadEnvFrom(dirRoot)
 	checkDirs()
 
 	if nonEmpty(lFiles)

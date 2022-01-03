@@ -1,5 +1,5 @@
 // cielo.test.coffee
-var CieloTester, cieloTester, dir, simple;
+var CieloTester, cieloTester, dirRoot, simple;
 
 import assert from 'assert';
 
@@ -29,18 +29,18 @@ import {
 } from '@jdeighan/coffee-utils/test';
 
 import {
-  loadEnv
+  loadEnvFrom
 } from '@jdeighan/env';
 
 import {
   brewCieloStr
 } from '@jdeighan/string-input/cielo';
 
-dir = mydir(import.meta.url);
+dirRoot = mydir(import.meta.url);
 
-process.env.DIR_ROOT = dir;
+process.env.DIR_ROOT = dirRoot;
 
-loadEnv();
+loadEnvFrom(dirRoot);
 
 simple = new UnitTester();
 

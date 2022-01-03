@@ -17,7 +17,7 @@ import {
 	fileExt, removeFileWithExt,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {loadEnv} from '@jdeighan/env'
+import {loadEnvFrom} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks, brewStarbucksFile} from '@jdeighan/starbucks'
@@ -52,8 +52,7 @@ nExecuted = 0
 main = () ->
 
 	parseCmdArgs()
-	process.env.DIR_ROOT = dirRoot
-	loadEnv()
+	lEnvFiles = loadEnvFrom(dirRoot)
 	if envOnly
 		doDebug = true
 		checkDirs()

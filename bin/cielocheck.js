@@ -50,7 +50,7 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  loadEnv
+  loadEnvFrom
 } from '@jdeighan/env';
 
 import {
@@ -79,10 +79,10 @@ nProcessed = 0;
 
 // ---------------------------------------------------------------------------
 main = function() {
-  var i, len, path, watcher;
+  var i, lEnvFiles, len, path, watcher;
   parseCmdArgs();
   process.env.DIR_ROOT = dirRoot;
-  loadEnv();
+  lEnvFiles = loadEnvFrom(dirRoot);
   checkDirs();
   if (nonEmpty(lFiles)) {
 // --- Process only these files
