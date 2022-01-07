@@ -52,6 +52,8 @@ nExecuted = 0
 main = () ->
 
 	parseCmdArgs()
+	if doDebug
+		log "...loading env from #{dirRoot}"
 	lEnvFiles = loadEnvFrom(dirRoot)
 	if envOnly
 		doDebug = true
@@ -247,8 +249,12 @@ parseCmdArgs = () ->
 		log "   -D turn on debugging (a lot of output!)"
 		log "   -A save CoffeeScript abstract syntax trees"
 		log "<dir> defaults to current working directory"
-		log "if none of -c, -k or -s set, acts as if -cks set"
+		log "if none of -c, -k, -s or -t set, acts as if -ckst set"
 		process.exit()
+
+	doDebug = true if hArgs.d
+	if doDebug
+		log "in parseCmdArgs()"
 
 	procCieloFiles = true if hArgs.c
 	procCoffeeFiles = true if hArgs.k
@@ -262,7 +268,6 @@ parseCmdArgs = () ->
 
 	doWatch = true if hArgs.w
 	envOnly = true if hArgs.e
-	doDebug = true if hArgs.d
 	quiet   = true if hArgs.q
 	doForce = true if hArgs.f
 	doExec  = true if hArgs.x
@@ -276,21 +281,31 @@ parseCmdArgs = () ->
 		setDebugging true
 
 	if hArgs._?
+		# --- Must be either a single directory
+		#     or a list of file names (simple, relative or absolute)
 		for path in hArgs._
 			if path.indexOf('.') == 0
 				# --- relative path - convert to absolute
-				path = getFullPath(path)  # converts \ to /
+				#     may be file or directory
+				newpath = getFullPath(path)  # converts \ to /
+			else if isSimpleFileName(path)
+				newpath = mkpath(process.cwd(), path)
 			else
-				path = mkpath(path)    # convert \ to /
-			if isDir(path)
+				newpath = mkpath(path)    # convert \ to /
+
+			if isDir(newpath)
+				if doDebug
+					log "found dir '#{newpath}' (from '#{path}')"
 				assert ! dirRoot, "multiple dirs not allowed"
-				dirRoot = path
+				dirRoot = newpath
 				if ! quiet
 					log "DIR_ROOT: #{dirRoot} (from cmd line)"
-			else if isFile(path)
-				lFiles.push path
+			else if isFile(newpath)
+				if doDebug
+					log "found file '#{newpath}' (from '#{path}')"
+				lFiles.push newpath
 			else
-				croak "Invalid path '#{path}' on command line"
+				croak "Invalid path '#{newpath}' on command line"
 
 	if ! dirRoot
 		dirRoot = mkpath(process.cwd())

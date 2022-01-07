@@ -121,6 +121,9 @@ nExecuted = 0;
 main = function() {
   var ext, i, jsPath, lEnvFiles, len, path, watcher;
   parseCmdArgs();
+  if (doDebug) {
+    log(`...loading env from ${dirRoot}`);
+  }
   lEnvFiles = loadEnvFrom(dirRoot);
   if (envOnly) {
     doDebug = true;
@@ -311,7 +314,7 @@ dumpOptions = function() {
 
 // ---------------------------------------------------------------------------
 parseCmdArgs = function() {
-  var hArgs, i, j, len, len1, path, ref;
+  var hArgs, i, j, len, len1, newpath, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
     boolean: words('h c k s t w e d q f x S D A'),
@@ -337,8 +340,14 @@ parseCmdArgs = function() {
     log("   -D turn on debugging (a lot of output!)");
     log("   -A save CoffeeScript abstract syntax trees");
     log("<dir> defaults to current working directory");
-    log("if none of -c, -k or -s set, acts as if -cks set");
+    log("if none of -c, -k, -s or -t set, acts as if -ckst set");
     process.exit();
+  }
+  if (hArgs.d) {
+    doDebug = true;
+  }
+  if (doDebug) {
+    log("in parseCmdArgs()");
   }
   if (hArgs.c) {
     procCieloFiles = true;
@@ -364,9 +373,6 @@ parseCmdArgs = function() {
   if (hArgs.e) {
     envOnly = true;
   }
-  if (hArgs.d) {
-    doDebug = true;
-  }
   if (hArgs.q) {
     quiet = true;
   }
@@ -390,24 +396,35 @@ parseCmdArgs = function() {
   }
   if (hArgs._ != null) {
     ref = hArgs._;
+    // --- Must be either a single directory
+    //     or a list of file names (simple, relative or absolute)
     for (i = 0, len = ref.length; i < len; i++) {
       path = ref[i];
       if (path.indexOf('.') === 0) {
         // --- relative path - convert to absolute
-        path = getFullPath(path); // converts \ to /
+        //     may be file or directory
+        newpath = getFullPath(path); // converts \ to /
+      } else if (isSimpleFileName(path)) {
+        newpath = mkpath(process.cwd(), path);
       } else {
-        path = mkpath(path); // convert \ to /
+        newpath = mkpath(path); // convert \ to /
       }
-      if (isDir(path)) {
+      if (isDir(newpath)) {
+        if (doDebug) {
+          log(`found dir '${newpath}' (from '${path}')`);
+        }
         assert(!dirRoot, "multiple dirs not allowed");
-        dirRoot = path;
+        dirRoot = newpath;
         if (!quiet) {
           log(`DIR_ROOT: ${dirRoot} (from cmd line)`);
         }
-      } else if (isFile(path)) {
-        lFiles.push(path);
+      } else if (isFile(newpath)) {
+        if (doDebug) {
+          log(`found file '${newpath}' (from '${path}')`);
+        }
+        lFiles.push(newpath);
       } else {
-        croak(`Invalid path '${path}' on command line`);
+        croak(`Invalid path '${newpath}' on command line`);
       }
     }
   }
