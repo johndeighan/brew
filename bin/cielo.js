@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 ;
-var brewFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, procCieloFiles, procCoffeeFiles, procStarbucksFiles, procTamlFiles, quiet, readySeen, saveAST, unlinkRelatedFiles;
+var brewFile, brewSvelteFile, checkDir, checkDirs, debugStarbucks, dirRoot, doDebug, doExec, doForce, doWatch, dumpOptions, dumpStats, envOnly, lFiles, main, nExecuted, nProcessed, needsUpdate, parseCmdArgs, procCieloFiles, procCoffeeFiles, procStarbucksFiles, procSvelteFiles, procTamlFiles, quiet, readySeen, saveAST, unlinkRelatedFiles;
 
 import parseArgs from 'minimist';
 
@@ -13,6 +13,10 @@ import chokidar from 'chokidar';
 import {
   exec
 } from 'child_process';
+
+import {
+  compile
+} from 'svelte/compiler';
 
 import {
   assert,
@@ -111,11 +115,36 @@ procStarbucksFiles = false; // set with -s
 
 procTamlFiles = false; // set with -t
 
+procSvelteFiles = false; // set with -v
+
 readySeen = false; // set true when 'ready' event is seen
 
 nProcessed = 0;
 
 nExecuted = 0;
+
+// ---------------------------------------------------------------------------
+brewSvelteFile = function(srcPath) {
+  var base, code, dir, ext, js, name, root;
+  ({dir, root, base, name, ext} = pathlib.parse(srcPath));
+  assert(ext === '.svelte', "brewSvelteFile(): Not a .svelte file");
+  code = slurp(mkpath(dir, base));
+  ({js} = compile(code, {
+    filename: base,
+    name,
+    format: 'esm',
+    errorMode: 'throw',
+    varsReport: false,
+    immutable: false,
+    dev: process.env.development,
+    css: true, // javascript takes care of setting CSS
+    loopGuardTimeout: 10000,
+    generate: 'dom',
+    hydratable: true,
+    enableSourcemap: false
+  }));
+  barf(withExt(srcPath, 'js'), js.code);
+};
 
 // ---------------------------------------------------------------------------
 main = function() {
@@ -144,6 +173,10 @@ main = function() {
         // --- *.coffee file was created, but we
         //     also want to create the *.js file
         brewFile(withExt(path, '.coffee'));
+      } else if (ext === '.starbucks') {
+        // --- *.svelte file was created, but we
+        //     also want to create the *.js and *.css files
+        brewFile(withExt(path, '.svelte'));
       }
       if (doExec && ((ext === '.cielo') || (ext === '.coffee'))) {
         // --- Execute the corresponding *.js file
@@ -183,60 +216,66 @@ main = function() {
     return readySeen = true;
   });
   watcher.on('all', function(event, path) {
-    var lMatches;
     // --- never process files in a node_modules directory
-    //     or any directory whose name begins with '.'
+    //     or any file or directory whose name begins with '.'
     assert(isString(path), "in watcher: path is not a string");
     if (path.match(/node_modules/) || path.match(/[\/\\]\./)) {
       return;
     }
-    if (lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)) {
-      if (!quiet) {
-        log(`${event} ${shortenPath(path)}`);
-      }
-      ext = lMatches[0];
-      if (event === 'unlink') {
-        return unlinkRelatedFiles(path, ext);
-      } else {
-        return brewFile(path);
-      }
+    if (!quiet) {
+      log(`[${event}] ${shortenPath(path)}`);
     }
+    if (event === 'unlink') {
+      unlinkRelatedFiles(path, ext);
+      return;
+    }
+    return brewFile(path);
   });
 };
 
 // ---------------------------------------------------------------------------
-brewFile = function(path) {
-  var force;
-  switch (fileExt(path)) {
+brewFile = function(fullpath) {
+  var base, dir, ext, force, name, root;
+  ({dir, root, base, name, ext} = pathlib.parse(fullpath));
+  if (!quiet) {
+    log(`[${event}] ${shortenPath(path)}`);
+  }
+  if (event === 'unlink') {
+    unlinkRelatedFiles(path, ext);
+    return;
+  }
+  switch (ext) {
     case '.cielo':
-      if (!procCieloFiles) {
-        return;
+      if (procCieloFiles) {
+        brewCieloFile(path);
+        return nProcessed += 1;
       }
-      brewCieloFile(path);
       break;
     case '.coffee':
-      if (!procCoffeeFiles) {
-        return;
+      if (procCoffeeFiles) {
+        force = doForce || readySeen;
+        brewCoffeeFile(path, undef, {saveAST, force});
+        return nProcessed += 1;
       }
-      force = doForce || readySeen;
-      brewCoffeeFile(path, undef, {saveAST, force});
       break;
     case '.starbucks':
-      if (!procStarbucksFiles) {
-        return;
+      if (procStarbucksFiles) {
+        brewStarbucksFile(path);
+        return nProcessed += 1;
       }
-      brewStarbucksFile(path);
       break;
     case '.taml':
-      if (!procTamlFiles) {
-        return;
+      if (procTamlFiles) {
+        brewTamlFile(path, undef, {force});
+        return nProcessed += 1;
       }
-      brewTamlFile(path, undef, {force});
       break;
-    default:
-      croak(`Unknown file type: ${path}`);
+    case '.svelte':
+      if (procSvelteFiles) {
+        brewSvelteFile(path);
+        return nProcessed += 1;
+      }
   }
-  nProcessed += 1;
 };
 
 // ---------------------------------------------------------------------------
@@ -317,7 +356,7 @@ parseCmdArgs = function() {
   var hArgs, i, j, len, len1, newpath, path, ref;
   // --- uses minimist
   hArgs = parseArgs(process.argv.slice(2), {
-    boolean: words('h c k s t w e d q f x S D A'),
+    boolean: words('h c k s t v w e d q f x S D A'),
     unknown: function(opt) {
       return true;
     }
@@ -330,6 +369,7 @@ parseCmdArgs = function() {
     log("   -k process *.coffee files");
     log("   -s process *.starbucks files");
     log("   -t process *.taml files");
+    log("   -v process *.svelte files");
     log("   -w process files, then watch for changes");
     log("   -e just display custom environment variables");
     log("   -d turn on some debugging");
@@ -340,7 +380,7 @@ parseCmdArgs = function() {
     log("   -D turn on debugging (a lot of output!)");
     log("   -A save CoffeeScript abstract syntax trees");
     log("<dir> defaults to current working directory");
-    log("if none of -c, -k, -s or -t set, acts as if -ckst set");
+    log("if none of -c, -k, -s, -t or -v set, acts as if -ckstv set");
     process.exit();
   }
   if (hArgs.d) {
@@ -361,11 +401,15 @@ parseCmdArgs = function() {
   if (hArgs.t) {
     procTamlFiles = true;
   }
-  if (!procCieloFiles && !procCoffeeFiles && !procStarbucksFiles && !procTamlFiles) {
+  if (hArgs.v) {
+    procSvelteFiles = true;
+  }
+  if (!procCieloFiles && !procCoffeeFiles && !procStarbucksFiles && !procTamlFiles && !procSvelteFiles) {
     procCieloFiles = true;
     procCoffeeFiles = true;
     procStarbucksFiles = true;
     procTamlFiles = true;
+    procSvelteFiles = true;
   }
   if (hArgs.w) {
     doWatch = true;

@@ -5,6 +5,7 @@ import pathlib from 'path'
 import fs from 'fs'
 import chokidar from 'chokidar'         # file watcher
 import {exec} from 'child_process'
+import {compile} from 'svelte/compiler'
 
 import {
 	assert, undef, warn, croak, words, sep_eq, nonEmpty,
@@ -42,10 +43,36 @@ procCieloFiles = false      # set with -c
 procCoffeeFiles = false     # set with -k
 procStarbucksFiles = false  # set with -s
 procTamlFiles = false       # set with -t
+procSvelteFiles = false     # set with -v
 
 readySeen = false      # set true when 'ready' event is seen
 nProcessed = 0
 nExecuted = 0
+
+# ---------------------------------------------------------------------------
+
+brewSvelteFile = (srcPath) ->
+
+	{dir, root, base, name, ext} = pathlib.parse(srcPath)
+	assert ext == '.svelte', "brewSvelteFile(): Not a .svelte file"
+
+	code = slurp(mkpath(dir, base))
+	{js} = compile(code, {
+		filename: base,
+		name,
+		format: 'esm',
+		errorMode: 'throw',
+		varsReport: false,
+		immutable: false,
+		dev: process.env.development,
+		css: true,   # javascript takes care of setting CSS
+		loopGuardTimeout: 10000,
+		generate: 'dom',
+		hydratable: true,
+		enableSourcemap: false,
+		})
+	barf withExt(srcPath, 'js'), js.code
+	return
 
 # ---------------------------------------------------------------------------
 
@@ -73,6 +100,10 @@ main = () ->
 				# --- *.coffee file was created, but we
 				#     also want to create the *.js file
 				brewFile withExt(path, '.coffee')
+			else if ext == '.starbucks'
+				# --- *.svelte file was created, but we
+				#     also want to create the *.js and *.css files
+				brewFile withExt(path, '.svelte')
 
 			if doExec && ((ext == '.cielo') || (ext == '.coffee'))
 				# --- Execute the corresponding *.js file
@@ -113,48 +144,52 @@ main = () ->
 	watcher.on 'all', (event, path) ->
 
 		# --- never process files in a node_modules directory
-		#     or any directory whose name begins with '.'
+		#     or any file or directory whose name begins with '.'
 		assert isString(path), "in watcher: path is not a string"
 		if path.match(/node_modules/) || path.match(/[\/\\]\./)
 			return
 
-		if lMatches = path.match(/\.(?:cielo|coffee|starbucks|taml)$/)
-			if ! quiet
-				log "#{event} #{shortenPath(path)}"
-			ext = lMatches[0]
-			if event == 'unlink'
-				unlinkRelatedFiles(path, ext)
-			else
-				brewFile path
+		if ! quiet
+			log "[#{event}] #{shortenPath(path)}"
+		if event == 'unlink'
+			unlinkRelatedFiles(path, ext)
+			return
+		brewFile path
 
 	return
 
 # ---------------------------------------------------------------------------
 
-brewFile = (path) ->
+brewFile = (fullpath) ->
 
-	switch fileExt(path)
+	{dir, root, base, name, ext} = pathlib.parse(fullpath)
+	if ! quiet
+		log "[#{event}] #{shortenPath(path)}"
+	if event == 'unlink'
+		unlinkRelatedFiles(path, ext)
+		return
+	switch ext
 		when '.cielo'
-			if ! procCieloFiles
-				return
-			brewCieloFile path
+			if procCieloFiles
+				brewCieloFile path
+				nProcessed += 1
 		when '.coffee'
-			if ! procCoffeeFiles
-				return
-			force = doForce || readySeen
-			brewCoffeeFile path, undef, {saveAST, force}
+			if procCoffeeFiles
+				force = doForce || readySeen
+				brewCoffeeFile path, undef, {saveAST, force}
+				nProcessed += 1
 		when '.starbucks'
-			if ! procStarbucksFiles
-				return
-			brewStarbucksFile path
+			if procStarbucksFiles
+				brewStarbucksFile path
+				nProcessed += 1
 		when '.taml'
-			if ! procTamlFiles
-				return
-			brewTamlFile path, undef, {force}
-		else
-			croak "Unknown file type: #{path}"
-	nProcessed += 1
-	return
+			if procTamlFiles
+				brewTamlFile path, undef, {force}
+				nProcessed += 1
+		when '.svelte'
+			if procSvelteFiles
+				brewSvelteFile path
+				nProcessed += 1
 
 # ---------------------------------------------------------------------------
 
@@ -226,7 +261,7 @@ parseCmdArgs = () ->
 
 	# --- uses minimist
 	hArgs = parseArgs(process.argv.slice(2), {
-		boolean: words('h c k s t w e d q f x S D A'),
+		boolean: words('h c k s t v w e d q f x S D A'),
 		unknown: (opt) ->
 			return true
 		})
@@ -239,6 +274,7 @@ parseCmdArgs = () ->
 		log "   -k process *.coffee files"
 		log "   -s process *.starbucks files"
 		log "   -t process *.taml files"
+		log "   -v process *.svelte files"
 		log "   -w process files, then watch for changes"
 		log "   -e just display custom environment variables"
 		log "   -d turn on some debugging"
@@ -249,7 +285,7 @@ parseCmdArgs = () ->
 		log "   -D turn on debugging (a lot of output!)"
 		log "   -A save CoffeeScript abstract syntax trees"
 		log "<dir> defaults to current working directory"
-		log "if none of -c, -k, -s or -t set, acts as if -ckst set"
+		log "if none of -c, -k, -s, -t or -v set, acts as if -ckstv set"
 		process.exit()
 
 	doDebug = true if hArgs.d
@@ -260,11 +296,13 @@ parseCmdArgs = () ->
 	procCoffeeFiles = true if hArgs.k
 	procStarbucksFiles = true if hArgs.s
 	procTamlFiles = true if hArgs.t
-	if ! procCieloFiles && ! procCoffeeFiles && ! procStarbucksFiles && ! procTamlFiles
+	procSvelteFiles = true if hArgs.v
+	if ! procCieloFiles && ! procCoffeeFiles && ! procStarbucksFiles && ! procTamlFiles && ! procSvelteFiles
 		procCieloFiles = true
 		procCoffeeFiles = true
 		procStarbucksFiles = true
 		procTamlFiles = true
+		procSvelteFiles = true
 
 	doWatch = true if hArgs.w
 	envOnly = true if hArgs.e
