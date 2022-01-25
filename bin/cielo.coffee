@@ -141,7 +141,7 @@ main = () ->
 				dumpStats()
 		readySeen = true
 
-	watcher.on 'all', (event, path) ->
+	watcher.on 'all', (theEvent, path) ->
 
 		# --- never process files in a node_modules directory
 		#     or any file or directory whose name begins with '.'
@@ -150,8 +150,8 @@ main = () ->
 			return
 
 		if ! quiet
-			log "[#{event}] #{shortenPath(path)}"
-		if event == 'unlink'
+			log "[#{theEvent}] #{shortenPath(path)}"
+		if theEvent == 'unlink'
 			unlinkRelatedFiles(path, ext)
 			return
 		brewFile path

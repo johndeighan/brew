@@ -215,7 +215,7 @@ main = function() {
     }
     return readySeen = true;
   });
-  watcher.on('all', function(event, path) {
+  watcher.on('all', function(theEvent, path) {
     // --- never process files in a node_modules directory
     //     or any file or directory whose name begins with '.'
     assert(isString(path), "in watcher: path is not a string");
@@ -223,9 +223,9 @@ main = function() {
       return;
     }
     if (!quiet) {
-      log(`[${event}] ${shortenPath(path)}`);
+      log(`[${theEvent}] ${shortenPath(path)}`);
     }
-    if (event === 'unlink') {
+    if (theEvent === 'unlink') {
       unlinkRelatedFiles(path, ext);
       return;
     }
