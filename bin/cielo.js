@@ -237,13 +237,6 @@ main = function() {
 brewFile = function(fullpath) {
   var base, dir, ext, force, name, root;
   ({dir, root, base, name, ext} = pathlib.parse(fullpath));
-  if (!quiet) {
-    log(`[${event}] ${shortenPath(path)}`);
-  }
-  if (event === 'unlink') {
-    unlinkRelatedFiles(path, ext);
-    return;
-  }
   switch (ext) {
     case '.cielo':
       if (procCieloFiles) {

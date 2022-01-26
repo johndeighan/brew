@@ -163,11 +163,6 @@ main = () ->
 brewFile = (fullpath) ->
 
 	{dir, root, base, name, ext} = pathlib.parse(fullpath)
-	if ! quiet
-		log "[#{event}] #{shortenPath(path)}"
-	if event == 'unlink'
-		unlinkRelatedFiles(path, ext)
-		return
 	switch ext
 		when '.cielo'
 			if procCieloFiles
