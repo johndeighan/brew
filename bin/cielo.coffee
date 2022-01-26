@@ -166,24 +166,24 @@ brewFile = (fullpath) ->
 	switch ext
 		when '.cielo'
 			if procCieloFiles
-				brewCieloFile path
+				brewCieloFile fullpath
 				nProcessed += 1
 		when '.coffee'
 			if procCoffeeFiles
 				force = doForce || readySeen
-				brewCoffeeFile path, undef, {saveAST, force}
+				brewCoffeeFile fullpath, undef, {saveAST, force}
 				nProcessed += 1
 		when '.starbucks'
 			if procStarbucksFiles
-				brewStarbucksFile path
+				brewStarbucksFile fullpath
 				nProcessed += 1
 		when '.taml'
 			if procTamlFiles
-				brewTamlFile path, undef, {force}
+				brewTamlFile fullpath, undef, {force}
 				nProcessed += 1
 		when '.svelte'
 			if procSvelteFiles
-				brewSvelteFile path
+				brewSvelteFile fullpath
 				nProcessed += 1
 
 # ---------------------------------------------------------------------------

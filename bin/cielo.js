@@ -240,32 +240,32 @@ brewFile = function(fullpath) {
   switch (ext) {
     case '.cielo':
       if (procCieloFiles) {
-        brewCieloFile(path);
+        brewCieloFile(fullpath);
         return nProcessed += 1;
       }
       break;
     case '.coffee':
       if (procCoffeeFiles) {
         force = doForce || readySeen;
-        brewCoffeeFile(path, undef, {saveAST, force});
+        brewCoffeeFile(fullpath, undef, {saveAST, force});
         return nProcessed += 1;
       }
       break;
     case '.starbucks':
       if (procStarbucksFiles) {
-        brewStarbucksFile(path);
+        brewStarbucksFile(fullpath);
         return nProcessed += 1;
       }
       break;
     case '.taml':
       if (procTamlFiles) {
-        brewTamlFile(path, undef, {force});
+        brewTamlFile(fullpath, undef, {force});
         return nProcessed += 1;
       }
       break;
     case '.svelte':
       if (procSvelteFiles) {
-        brewSvelteFile(path);
+        brewSvelteFile(fullpath);
         return nProcessed += 1;
       }
   }
