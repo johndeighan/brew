@@ -22,7 +22,7 @@ import {loadEnvFrom} from '@jdeighan/env'
 import {getNeededSymbols} from '@jdeighan/string-input/coffee'
 import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {starbucks, brewStarbucksFile} from '@jdeighan/starbucks'
-import {brewTamlFile} from '@jdeighan/starbucks/stores'
+import {brewTamlFile} from '@jdeighan/coffee-utils/store'
 import {brewCieloFile} from '@jdeighan/string-input/cielo'
 import {brewCoffeeFile} from '@jdeighan/string-input/coffee'
 

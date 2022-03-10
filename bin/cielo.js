@@ -75,7 +75,7 @@ import {
 
 import {
   brewTamlFile
-} from '@jdeighan/starbucks/stores';
+} from '@jdeighan/coffee-utils/store';
 
 import {
   brewCieloFile
