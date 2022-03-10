@@ -2,13 +2,13 @@
 
 import assert from 'assert'
 
+import {UnitTester} from '@jdeighan/unit-tester'
 import {
 	undef, pass, isEmpty, isComment,
 	} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {log} from '@jdeighan/coffee-utils/log'
 import {mydir, mkpath} from '@jdeighan/coffee-utils/fs'
-import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {loadEnvFrom} from '@jdeighan/env'
 import {brewCieloStr} from '@jdeighan/string-input/cielo'
 

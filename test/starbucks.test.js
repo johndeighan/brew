@@ -4,14 +4,14 @@ var CieloTester, StarbucksTester, dirRoot, starbucksTester;
 import assert from 'assert';
 
 import {
+  UnitTester
+} from '@jdeighan/unit-tester';
+
+import {
   slurp,
   mydir,
   mkpath
 } from '@jdeighan/coffee-utils/fs';
-
-import {
-  UnitTester
-} from '@jdeighan/coffee-utils/test';
 
 import {
   log

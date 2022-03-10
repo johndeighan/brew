@@ -25,14 +25,16 @@
 	"author": "John Deighan",
 	"license": "MIT",
 	"dependencies": {
-		"@jdeighan/coffee-utils": "^4.1.23",
-		"@jdeighan/env": "^8.0.36",
-		"@jdeighan/starbucks": "^7.0.38",
-		"@jdeighan/string-input": "^8.0.47",
-		"ava": "^3.15.0",
+		"@jdeighan/coffee-utils": "^5.0.1",
+		"@jdeighan/env": "^9.0.1",
+		"@jdeighan/starbucks": "^8.0.0",
+		"@jdeighan/string-input": "^9.0.1",
 		"chokidar": "^3.5.3",
 		"cross-env": "^7.0.3",
 		"minimist": "^1.2.5",
-		"svelte": "^3.46.2"
+		"svelte": "^3.46.4"
+	},
+	"devDependencies": {
+		"@jdeighan/unit-tester": "^1.0.4"
 	}
 }
