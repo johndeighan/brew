@@ -18,13 +18,16 @@ import {
 	fileExt, removeFileWithExt,
 	} from '@jdeighan/coffee-utils/fs'
 import {setDebugging, debug} from '@jdeighan/coffee-utils/debug'
-import {loadEnvFrom} from '@jdeighan/env'
-import {getNeededSymbols} from '@jdeighan/string-input/coffee'
-import {isTAML, taml} from '@jdeighan/string-input/taml'
-import {starbucks, brewStarbucksFile} from '@jdeighan/starbucks'
 import {brewTamlFile} from '@jdeighan/coffee-utils/store'
+
+import {
+	getNeededSymbols, brewCoffeeFile,
+	} from '@jdeighan/string-input/coffee'
+import {isTAML, taml} from '@jdeighan/string-input/taml'
 import {brewCieloFile} from '@jdeighan/string-input/cielo'
-import {brewCoffeeFile} from '@jdeighan/string-input/coffee'
+
+import {loadEnvFrom} from '@jdeighan/env'
+import {starbucks, brewStarbucksFile} from '@jdeighan/starbucks'
 
 dirRoot = undef        # set in parseCmdArgs()
 lFiles = []            # to process individual files

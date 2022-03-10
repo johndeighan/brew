@@ -56,11 +56,12 @@ import {
 } from '@jdeighan/coffee-utils/debug';
 
 import {
-  loadEnvFrom
-} from '@jdeighan/env';
+  brewTamlFile
+} from '@jdeighan/coffee-utils/store';
 
 import {
-  getNeededSymbols
+  getNeededSymbols,
+  brewCoffeeFile
 } from '@jdeighan/string-input/coffee';
 
 import {
@@ -69,21 +70,17 @@ import {
 } from '@jdeighan/string-input/taml';
 
 import {
-  starbucks,
-  brewStarbucksFile
-} from '@jdeighan/starbucks';
-
-import {
-  brewTamlFile
-} from '@jdeighan/coffee-utils/store';
-
-import {
   brewCieloFile
 } from '@jdeighan/string-input/cielo';
 
 import {
-  brewCoffeeFile
-} from '@jdeighan/string-input/coffee';
+  loadEnvFrom
+} from '@jdeighan/env';
+
+import {
+  starbucks,
+  brewStarbucksFile
+} from '@jdeighan/starbucks';
 
 dirRoot = undef; // set in parseCmdArgs()
 
